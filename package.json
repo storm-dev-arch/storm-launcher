@@ -1,0 +1,81 @@
+{
+  "name": "storm-launcher",
+  "version": "1.0.0",
+  "description": "Modern Black Glassmorphism Game Launcher & Library Manager for Windows",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:win": "npm run build && electron-builder --win",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "game-launcher",
+    "steam",
+    "windows",
+    "electron",
+    "react",
+    "gaming",
+    "glassmorphism",
+    "storm-launcher"
+  ],
+  "author": "Storm (storm-dev-arch)",
+  "license": "Custom",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "build": {
+    "appId": "com.storm.launcher",
+    "productName": "Storm Launcher",
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Storm-Launcher-Setup.exe"
+    },
+    "portable": {
+      "artifactName": "Storm-Launcher-Portable.exe"
+    }
+  }
+}

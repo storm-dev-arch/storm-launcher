@@ -1,0 +1,27 @@
+STORM SOURCE-AVAILABLE & NON-COMMERCIAL LICENSE
+
+Copyright (c) 2026 Storm (https://github.com/storm-dev-arch). All rights reserved.
+
+By accessing, viewing, downloading, compiling, or using the source code or binaries of STORM LAUNCHER ("Software"), you agree to be bound by the following terms and conditions:
+
+1. SOURCE-AVAILABLE / OPEN ACCESS:
+   The source code of this Software is publicly available for inspection, security auditing, learning, and personal non-commercial educational use.
+
+2. STRICT PROHIBITION OF THEFT, REBRANDING, AND UNAUTHORIZED REDISTRIBUTION:
+   - You may NOT rebrand, rename, or claim this Software or any part of its source code, architecture, or assets as your own creation.
+   - You may NOT remove, alter, or obscure any copyright notices, author watermarks ("Made by Storm", "Storm", "storm-dev-arch"), or license texts in the source code, UI, or binaries.
+   - You may NOT repackage, clone, or redistribute the Software under another project name or entity without prior explicit written permission from the copyright holder (Storm).
+
+3. STRICT PROHIBITION OF COMMERCIAL USE:
+   - You may NOT sell, rent, lease, monetize, sub-license, or include this Software (or any derived works) in any paid software, distribution, SaaS, or commercial product without express prior written consent from the author.
+   - Any commercial exploitation without written authorization is strictly prohibited.
+
+4. DERIVATIVE WORKS:
+   - Forks and modifications are permitted strictly for personal, non-commercial research or local usage.
+   - Public redistribution of modified versions, precompiled binaries, or forks is strictly prohibited unless authorized in writing by the copyright holder or submitted as an approved Pull Request to the official repository (https://github.com/storm-dev-arch/storm-launcher).
+
+5. TERMINATION:
+   Any violation of these terms automatically terminates all permissions granted herein and is subject to copyright law enforcement.
+
+6. DISCLAIMER OF WARRANTY:
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY.
