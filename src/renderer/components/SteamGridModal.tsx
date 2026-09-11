@@ -97,7 +97,6 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div
           style={{
             padding: '20px 24px',
@@ -148,9 +147,7 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
           </button>
         </div>
 
-        {/* Search Bar & Tabs */}
         <div style={{ padding: '16px 24px', display: 'flex', gap: '12px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
-          {/* Search Input */}
           <div
             style={{
               flex: 1,
@@ -197,7 +194,6 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
             {language === 'ru' ? 'Искать' : 'Search'}
           </button>
 
-          {/* Type Selector */}
           <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.4)', padding: '3px', borderRadius: '8px' }}>
             <button
               onClick={() => {
@@ -256,7 +252,6 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
           </div>
         </div>
 
-        {/* Image Grid Content */}
         <div
           style={{
             flex: 1,

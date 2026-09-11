@@ -10,7 +10,6 @@ export function createWindowsDesktopShortcut(game: Game): { success: boolean; pa
     const safeTitle = game.name.replace(/[/\\?%*:|"<>]/g, '');
 
     if (game.source === 'steam' && game.steamAppId) {
-      // Create .url shortcut with Steam protocol
       const shortcutPath = path.join(desktopPath, `${safeTitle}.url`);
       const content = [
         '[InternetShortcut]',

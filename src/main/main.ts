@@ -14,6 +14,8 @@ import { deepDiskScanner } from './deepDiskScanner';
 import { steamGridDBService } from './steamGridDB';
 import { achievementEngine } from './achievementEngine';
 import { screenshotManager } from './screenshotManager';
+import { gsiService } from './gsiService';
+import { processWatcher } from './processWatcher';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -37,10 +39,8 @@ function createWindow() {
     }
   });
 
-  // Safe play:// protocol for cached artwork, screenshots, and local streams
   registerPlayProtocol(db.getCacheDir());
 
-  // Load URL or build
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
@@ -50,14 +50,21 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
 
-    // Initialize Discord RPC if enabled
     if (settings.discordRPC !== false) {
       discordRPC.setIdle(db.getGames().length);
     } else {
       discordRPC.setEnabled(false);
     }
 
-    // Auto-scan Steam & Multi-launchers (Epic Games, GOG Galaxy) on startup (non-blocking)
+    gsiService.setWindow(mainWindow);
+    gsiService.startServer();
+    const steamStatus = steamScanner.getSteamStatus();
+    if (steamStatus.libraries && steamStatus.libraries.length > 0) {
+      gsiService.installGSIConfigs(steamStatus.libraries);
+    }
+
+    processWatcher.start();
+
     steamScanner.scan((progress) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('play:scanner:progress', progress);
@@ -85,7 +92,6 @@ function createWindow() {
   });
 }
 
-// Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
@@ -101,6 +107,7 @@ if (!gotTheLock) {
 }
 
 app.on('window-all-closed', () => {
+  processWatcher.stop();
   discordRPC.clearActivity();
   if (process.platform !== 'darwin') {
     app.quit();
@@ -113,11 +120,6 @@ app.on('activate', () => {
   }
 });
 
-// ==========================================
-// IPC HANDLERS
-// ==========================================
-
-// 1. Games Management
 ipcMain.handle('play:games:getAll', () => db.getGames());
 ipcMain.handle('play:games:getById', (_, id) => db.getGame(id) || null);
 ipcMain.handle('play:games:toggleFavorite', (_, id) => db.toggleFavorite(id));
@@ -163,16 +165,13 @@ ipcMain.handle('play:games:createDesktopShortcut', (_, id) => {
   return createWindowsDesktopShortcut(g);
 });
 
-// 2. Scanner & Multi-Launchers
 ipcMain.handle('play:scanner:syncAll', async (_, force) => {
-  // 1. Scan Steam
   const steamResult = await steamScanner.scan((prog) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('play:scanner:progress', prog);
     }
   }, force);
 
-  // 2. Scan Multi-Launchers (Epic Games, GOG Galaxy, Ubisoft)
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('play:scanner:progress', {
       stage: 'reading_games',
@@ -185,7 +184,6 @@ ipcMain.handle('play:scanner:syncAll', async (_, force) => {
 
   const multiGames = await multiLauncherScanner.scanAllAsync();
 
-  // 3. Upsert both sets into DB
   const allScanned = [...steamResult.games, ...multiGames];
   db.upsertGames(allScanned);
 
@@ -260,27 +258,23 @@ ipcMain.handle('play:scanner:selectFile', async (_, filters) => {
 });
 ipcMain.handle('play:scanner:getSteamStatus', () => steamScanner.getSteamStatus());
 
-// 3. SteamGridDB Integration
 ipcMain.handle('play:steamgrid:search', (_, query, type) => steamGridDBService.searchArtwork(query, type));
 ipcMain.handle('play:steamgrid:apply', (_, gameId, type, url) => steamGridDBService.applyArtwork(gameId, type, url));
 
-// 4. Steam Achievements
 ipcMain.handle('play:achievements:get', (_, steamAppId) => achievementEngine.getAchievements(steamAppId));
 
-// 5. Steam Screenshots
 ipcMain.handle('play:screenshots:get', (_, steamAppId) => screenshotManager.getScreenshotsForGame(steamAppId));
 ipcMain.handle('play:screenshots:open', (_, steamAppId) => screenshotManager.openScreenshotsFolder(steamAppId));
 
-// 6. Discord RPC
 ipcMain.handle('play:discord:updateStatus', (_, activity) => {
   discordRPC.setActivity(activity);
+  return true;
 });
+ipcMain.handle('play:gsi:getStats', () => gsiService.getStats());
 
-// 7. Sessions & Stats
 ipcMain.handle('play:sessions:getAll', () => db.getSessions());
 ipcMain.handle('play:sessions:getStats', () => db.getStats());
 
-// 8. Collections
 ipcMain.handle('play:collections:getAll', () => db.getCollections());
 ipcMain.handle('play:collections:create', (_, name, color) => {
   const col = {
@@ -331,16 +325,19 @@ ipcMain.handle('play:collections:removeGame', (_, colId, gameId) => {
   return true;
 });
 
-// 9. Settings
 ipcMain.handle('play:settings:get', () => db.getSettings());
 ipcMain.handle('play:settings:update', (_, partial) => {
   if (partial.discordRPC !== undefined) {
     discordRPC.setEnabled(partial.discordRPC);
   }
-  return db.saveSettings(partial);
+  const updated = db.saveSettings(partial);
+  if (partial.language !== undefined) {
+    processWatcher.refreshLanguage();
+    gsiService.refreshLanguage();
+  }
+  return updated;
 });
 
-// 10. System
 ipcMain.on('play:system:minimize', () => mainWindow?.minimize());
 ipcMain.on('play:system:maximize', () => {
   if (!mainWindow) return;

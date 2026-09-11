@@ -37,6 +37,9 @@ const api: StormPlayAPI = {
   discord: {
     updateStatus: (activity) => ipcRenderer.invoke('play:discord:updateStatus', activity)
   },
+  gsi: {
+    getStats: () => ipcRenderer.invoke('play:gsi:getStats')
+  },
   sessions: {
     getAll: () => ipcRenderer.invoke('play:sessions:getAll'),
     getStats: () => ipcRenderer.invoke('play:sessions:getStats')
@@ -81,6 +84,11 @@ const api: StormPlayAPI = {
       const handler = (_: any, games: Game[]) => callback(games);
       ipcRenderer.on('play:games:updated', handler);
       return () => ipcRenderer.removeListener('play:games:updated', handler);
+    },
+    onGSIUpdate: (callback) => {
+      const handler = (_: any, stats: any) => callback(stats);
+      ipcRenderer.on('play:gsi:update', handler);
+      return () => ipcRenderer.removeListener('play:gsi:update', handler);
     }
   }
 };

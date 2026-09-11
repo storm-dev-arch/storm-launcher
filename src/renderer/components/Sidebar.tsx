@@ -91,7 +91,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       <div>
-        {/* Main Nav Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '24px' }}>
           {mainNav.map(item => {
             const Icon = item.icon;
@@ -151,7 +150,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </div>
 
-        {/* Source Categories - Now Clickable! */}
         <div style={{ padding: '0 8px', marginBottom: '8px' }}>
           <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px' }}>
             {t.sources}
@@ -303,7 +301,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Add Game Button */}
         <div style={{ padding: '12px 6px 0 6px' }}>
           <button
             onClick={() => {
@@ -328,7 +325,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Bottom Settings & Version */}
       <div>
         <button
           onClick={() => {

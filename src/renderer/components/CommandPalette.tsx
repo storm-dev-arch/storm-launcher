@@ -38,7 +38,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
-  // Filter games and commands
   const cleanQ = query.toLowerCase().trim();
 
   const commands = [
@@ -109,7 +108,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Search input header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)' }}>
           <Search size={18} style={{ color: 'var(--text-muted)', marginRight: '12px' }} />
           <input
@@ -134,7 +132,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           <kbd style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>ESC</kbd>
         </div>
 
-        {/* List of results */}
         <div style={{ maxHeight: '360px', overflowY: 'auto', padding: '8px' }}>
           {commands.length > 0 && (
             <div style={{ marginBottom: '6px' }}>

@@ -37,7 +37,6 @@ export const StatisticsPage: React.FC<StatisticsPageProps> = ({ language }) => {
         </p>
       </header>
 
-      {/* Hero Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <div className="glass-section" style={{ padding: '20px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -88,7 +87,6 @@ export const StatisticsPage: React.FC<StatisticsPageProps> = ({ language }) => {
         </div>
       </div>
 
-      {/* Top Played Games Breakdown */}
       <div className="glass-section" style={{ padding: '24px', marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
           <Flame size={18} style={{ color: '#F59E0B' }} />
@@ -113,7 +111,6 @@ export const StatisticsPage: React.FC<StatisticsPageProps> = ({ language }) => {
                     {formatHours(game.playtimeMinutes || 0)}
                   </span>
                 </div>
-                {/* Progress bar */}
                 <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div
                     style={{
@@ -131,7 +128,6 @@ export const StatisticsPage: React.FC<StatisticsPageProps> = ({ language }) => {
         </div>
       </div>
 
-      {/* Recent Sessions Activity */}
       <div className="glass-section" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Clock size={18} style={{ color: 'var(--accent-primary)' }} />

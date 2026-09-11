@@ -77,7 +77,6 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
         <X size={14} />
       </button>
 
-      {/* Auto-dismiss subtle progress line */}
       <div
         style={{
           position: 'absolute',

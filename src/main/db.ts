@@ -31,7 +31,6 @@ export class DatabaseService {
     if (!fs.existsSync(this.dbDir)) fs.mkdirSync(this.dbDir, { recursive: true });
     if (!fs.existsSync(this.cacheDir)) fs.mkdirSync(this.cacheDir, { recursive: true });
 
-    // Migrate from legacy storm-play directory if present
     try {
       const legacyDbDir = path.join(app.getPath('appData'), 'storm-play', 'StormPlay', 'database');
       if (fs.existsSync(legacyDbDir) && !fs.existsSync(path.join(this.dbDir, 'games.json'))) {
@@ -83,7 +82,6 @@ export class DatabaseService {
   }
 
   private loadAll() {
-    // 1. Games
     const gamesFile = path.join(this.dbDir, 'games.json');
     if (fs.existsSync(gamesFile)) {
       try {
@@ -96,7 +94,6 @@ export class DatabaseService {
       }
     }
 
-    // 2. Sessions
     const sessionsFile = path.join(this.dbDir, 'sessions.json');
     if (fs.existsSync(sessionsFile)) {
       try {
@@ -106,7 +103,6 @@ export class DatabaseService {
       }
     }
 
-    // 3. Collections
     const collectionsFile = path.join(this.dbDir, 'collections.json');
     if (fs.existsSync(collectionsFile)) {
       try {
@@ -124,7 +120,6 @@ export class DatabaseService {
     fs.renameSync(tmpPath, filePath);
   }
 
-  // Games API
   public getGames(): Game[] {
     return Array.from(this.gamesMap.values());
   }
@@ -143,7 +138,6 @@ export class DatabaseService {
     for (const g of newGames) {
       const existing = this.gamesMap.get(g.id);
       if (existing) {
-        // Preserve user customizations (favorite, custom collection, user playtime if greater)
         this.gamesMap.set(g.id, {
           ...g,
           favorite: existing.favorite,
@@ -178,21 +172,18 @@ export class DatabaseService {
     return game;
   }
 
-  // Sessions API
   public getSessions(): SessionRecord[] {
     return [...this.sessions].sort((a, b) => b.startTime - a.startTime);
   }
 
   public addSession(session: SessionRecord) {
     this.sessions.unshift(session);
-    // Keep last 1000 sessions
     if (this.sessions.length > 1000) {
       this.sessions = this.sessions.slice(0, 1000);
     }
     this.saveFile('sessions.json', this.sessions);
   }
 
-  // Collections API
   public getCollections(): CollectionRecord[] {
     return [...this.collections];
   }
@@ -212,7 +203,6 @@ export class DatabaseService {
     this.collections = this.collections.filter(c => c.id !== id);
     this.saveFile('collections.json', this.collections);
 
-    // Remove from games
     for (const g of this.gamesMap.values()) {
       if (g.collections && g.collections.includes(id)) {
         g.collections = g.collections.filter(cId => cId !== id);
@@ -222,7 +212,6 @@ export class DatabaseService {
     return true;
   }
 
-  // Settings API
   public getSettings(): LauncherSettings {
     return { ...this.settings };
   }
@@ -233,13 +222,11 @@ export class DatabaseService {
     return { ...this.settings };
   }
 
-  // Stats Calculator
   public getStats(): LauncherStats {
     const games = Array.from(this.gamesMap.values());
     const totalPlaytimeMinutes = games.reduce((acc, g) => acc + (g.playtimeMinutes || 0), 0);
     const mostPlayed = [...games].sort((a, b) => (b.playtimeMinutes || 0) - (a.playtimeMinutes || 0)).slice(0, 5);
 
-    // Group playtime by day (last 14 days)
     const playtimeByDay: { [key: string]: number } = {};
     for (const s of this.sessions) {
       const dateKey = new Date(s.startTime).toISOString().split('T')[0];

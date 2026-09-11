@@ -28,12 +28,10 @@ export const AddGameModal: React.FC<AddGameModalProps> = ({
     if (file) {
       setExePath(file);
       if (!name) {
-        // Derive name from filename
         const parts = file.split(/[\\/]/);
         const fileName = parts[parts.length - 1].replace(/\.exe$/i, '');
         setName(fileName.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
       }
-      // Auto working directory
       const dir = file.substring(0, file.lastIndexOf('\\'));
       setWorkDir(dir);
     }

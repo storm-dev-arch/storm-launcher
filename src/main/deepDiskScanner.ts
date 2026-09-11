@@ -4,7 +4,6 @@ import { execSync } from 'child_process';
 import type { CandidateExe } from '../shared/types';
 
 export class DeepDiskScanner {
-  // Get all active drive letters (e.g. C:\, D:\, E:\)
   private getLogicalDrives(): string[] {
     const drives: string[] = [];
     try {
@@ -19,7 +18,6 @@ export class DeepDiskScanner {
         }
       }
     } catch {
-      // Fallback
       for (const letter of ['C', 'D', 'E', 'F', 'G', 'H']) {
         const p = `${letter}:\\`;
         if (fs.existsSync(p)) drives.push(p);
@@ -72,14 +70,12 @@ export class DeepDiskScanner {
 
           const fullPath = path.join(drive, entry.name);
 
-          // Priority 1: High probability game root folders (e.g. D:\Games, D:\Игры)
           const isGameRoot = commonGamesKeywords.some(k => folderNameLower.includes(k));
 
           if (isGameRoot) {
             onProgress?.(`Inspecting game directory: ${entry.name}...`);
             this.scanGameFolderContainer(fullPath, results, seenPaths, onProgress);
           } else {
-            // Check if root folder itself is a standalone game
             this.checkIfGameFolder(fullPath, results, seenPaths);
           }
         }
@@ -120,7 +116,6 @@ export class DeepDiskScanner {
       let isGame = false;
       let exeCandidates: { file: string; score: number; size: number }[] = [];
 
-      // Signature checks
       const hasSteamApi = files.some(f => f.toLowerCase() === 'steam_api64.dll' || f.toLowerCase() === 'steam_api.dll');
       const hasUnity = files.some(f => f.toLowerCase() === 'unityplayer.dll');
       const hasUnreal = files.some(f => f.toLowerCase() === 'engine' || f.toLowerCase() === 'binaries');
@@ -129,12 +124,10 @@ export class DeepDiskScanner {
         isGame = true;
       }
 
-      // Find executables
       for (const f of files) {
         const lower = f.toLowerCase();
         if (!lower.endsWith('.exe')) continue;
 
-        // Skip obvious utility and uninstallation executables
         if (
           lower.includes('unins') ||
           lower.includes('crash') ||
@@ -150,9 +143,8 @@ export class DeepDiskScanner {
 
         try {
           const stat = fs.statSync(path.join(folderPath, f));
-          let score = stat.size / 1024 / 1024; // size in MB
+          let score = stat.size / 1024 / 1024;
 
-          // Prefer exe that matches folder name
           const folderBase = path.basename(folderPath).toLowerCase();
           if (folderBase.includes(lower.replace('.exe', '')) || lower.replace('.exe', '').includes(folderBase)) {
             score += 500;
@@ -162,7 +154,6 @@ export class DeepDiskScanner {
         } catch {}
       }
 
-      // If contains Binaries/Win64 (Unreal Engine)
       const win64Dir = path.join(folderPath, 'Binaries', 'Win64');
       if (fs.existsSync(win64Dir)) {
         isGame = true;
@@ -178,7 +169,6 @@ export class DeepDiskScanner {
       }
 
       if ((isGame || exeCandidates.length > 0) && exeCandidates.length > 0) {
-        // Sort by best candidate
         exeCandidates.sort((a, b) => b.score - a.score);
         const best = exeCandidates[0];
         const fullExePath = path.join(folderPath, best.file);
@@ -202,8 +192,8 @@ export class DeepDiskScanner {
 
   private cleanGameTitle(raw: string): string {
     return raw
-      .replace(/\[.*?\]/g, '') // remove [FitGirl Repack], [DODI], etc.
-      .replace(/\(.*?\)/g, '') // remove (v1.0.4), (2024), etc.
+      .replace(/\[.*?\]/g, '')
+      .replace(/\(.*?\)/g, '')
       .replace(/_/g, ' ')
       .replace(/\s+/g, ' ')
       .replace(/repack|repack by|gog|rip|deluxe edition|goty/gi, '')

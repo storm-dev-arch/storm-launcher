@@ -88,7 +88,6 @@ export const WhatShouldIPlayModal: React.FC<WhatShouldIPlayModalProps> = ({
           Let Storm Launcher choose a title from your real library.
         </p>
 
-        {/* Filter toggles */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '24px' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <input
@@ -110,7 +109,6 @@ export const WhatShouldIPlayModal: React.FC<WhatShouldIPlayModalProps> = ({
           </label>
         </div>
 
-        {/* Display selected game card or spin state */}
         <div style={{ minHeight: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
           {isSpinning ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)' }}>

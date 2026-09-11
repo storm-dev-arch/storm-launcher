@@ -77,7 +77,6 @@ export class MultiLauncherScanner {
   public scanAll(): Game[] {
     const games: Game[] = [];
 
-    // 1. Epic Games Store
     try {
       const epicGames = this.scanEpicGames();
       games.push(...epicGames);
@@ -85,7 +84,6 @@ export class MultiLauncherScanner {
       console.warn('Epic Games scan warning:', e);
     }
 
-    // 2. GOG Galaxy
     try {
       const gogGames = this.scanGOGGames();
       games.push(...gogGames);
@@ -93,7 +91,6 @@ export class MultiLauncherScanner {
       console.warn('GOG Galaxy scan warning:', e);
     }
 
-    // 3. EA App & Ubisoft common games
     try {
       const otherGames = this.scanOtherLaunchers();
       games.push(...otherGames);
@@ -107,7 +104,6 @@ export class MultiLauncherScanner {
   public async scanAllAsync(): Promise<Game[]> {
     const games = this.scanAll();
 
-    // Enrich games with covers
     for (const g of games) {
       if (!g.artwork.cover) {
         const norm = g.name.toLowerCase().trim();
@@ -148,7 +144,6 @@ export class MultiLauncherScanner {
 
         if (!data.DisplayName || !data.InstallLocation) continue;
 
-        // Skip Unreal Engine editors, dependencies or runtimes
         if (
           data.DisplayName.includes('Unreal Engine') ||
           data.DisplayName.includes('DirectX') ||
@@ -180,7 +175,6 @@ export class MultiLauncherScanner {
           dateAdded: Date.now(),
           custom: false,
           artwork: {
-            // High quality fallback artwork
             icon: undefined,
             cover: undefined
           },
@@ -200,7 +194,6 @@ export class MultiLauncherScanner {
     const gogGames: Game[] = [];
     const foundPaths = new Set<string>();
 
-    // 1. Try scanning via Registry query
     try {
       const regOutput = execSync(
         'reg query "HKLM\\SOFTWARE\\WOW6432Node\\GOG.com\\Games" /s 2>nul',
@@ -246,7 +239,6 @@ export class MultiLauncherScanner {
       }
     } catch {}
 
-    // 2. Scan standard GOG default folders if registry didn't catch all
     const defaultGogDirs = [
       'C:\\Program Files (x86)\\GOG Galaxy\\Games',
       'C:\\GOG Games',
@@ -263,7 +255,6 @@ export class MultiLauncherScanner {
           const gameFolder = path.join(gogDir, d.name);
           if (foundPaths.has(gameFolder.toLowerCase())) continue;
 
-          // Look for goggame-*.info
           const files = fs.readdirSync(gameFolder);
           const infoFile = files.find(f => f.startsWith('goggame-') && f.endsWith('.info'));
           if (infoFile) {
@@ -308,7 +299,6 @@ export class MultiLauncherScanner {
   private scanOtherLaunchers(): Game[] {
     const games: Game[] = [];
 
-    // Ubisoft Connect Games
     const ubiDir = 'C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games';
     if (fs.existsSync(ubiDir)) {
       try {

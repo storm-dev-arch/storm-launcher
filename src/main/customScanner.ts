@@ -27,7 +27,6 @@ export class CustomScannerService {
         for (const e of entries) {
           const fullPath = path.join(dir, e.name);
           if (e.isDirectory()) {
-            // Ignore system, temp, redist directories
             const low = e.name.toLowerCase();
             if (low === 'windows' || low === '$recycle.bin' || low === 'temp' || low === '_redist' || low === 'support') {
               continue;
@@ -36,7 +35,6 @@ export class CustomScannerService {
           } else if (e.isFile() && e.name.toLowerCase().endsWith('.exe')) {
             if (this.isLikelyGameExe(e.name)) {
               const stat = fs.statSync(fullPath);
-              // Ignore zero-byte or tiny files (< 200KB)
               if (stat.size > 200 * 1024) {
                 const suggestedTitle = this.formatGameTitle(e.name, dir);
                 results.push({
@@ -51,7 +49,6 @@ export class CustomScannerService {
           }
         }
       } catch (err) {
-        // Skip unreadable folders
       }
     };
 
@@ -68,7 +65,6 @@ export class CustomScannerService {
 
   private formatGameTitle(filename: string, dir: string): string {
     const folderName = path.basename(dir);
-    // If folder name looks like a game title and not generic 'bin' or 'x64'
     const low = folderName.toLowerCase();
     if (low !== 'bin' && low !== 'x64' && low !== 'x86' && low !== 'game' && low !== 'release') {
       return folderName.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());

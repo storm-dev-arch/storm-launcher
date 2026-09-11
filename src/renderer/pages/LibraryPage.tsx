@@ -37,7 +37,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
   const [filterSource, setFilterSource] = useState<string>(initialFilter);
   const [sortBy, setSortBy] = useState<'name' | 'playtime' | 'recent' | 'added'>('name');
 
-  // Keep filterSource in sync when navigation tab changes!
   useEffect(() => {
     if (initialFilter) {
       setFilterSource(initialFilter);
@@ -50,7 +49,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
   const filteredGames = useMemo(() => {
     let list = [...games];
 
-    // Filter by category
     if (filterSource === 'installed') {
       list = list.filter(g => g.installed);
     } else if (filterSource === 'steam') {
@@ -67,13 +65,11 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
       list = list.filter(g => (g.lastPlayed || 0) > 0);
     }
 
-    // Filter by search query
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       list = list.filter(g => g.name.toLowerCase().includes(q));
     }
 
-    // Sort
     list.sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
       if (sortBy === 'playtime') return (b.playtimeMinutes || 0) - (a.playtimeMinutes || 0);
@@ -98,7 +94,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
 
   return (
     <div className="view-transition" style={{ padding: '28px 36px', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Top Filter Bar & Actions */}
       <div
         style={{
           display: 'flex',
@@ -109,7 +104,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
           flexWrap: 'wrap'
         }}
       >
-        {/* Filter Pills */}
         <div
           style={{
             display: 'flex',
@@ -157,9 +151,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
           })}
         </div>
 
-        {/* Search, Sort & View Modes */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Quick Search */}
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
@@ -177,7 +169,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
             />
           </div>
 
-          {/* Sort Dropdown */}
           <div
             style={{
               display: 'flex',
@@ -210,7 +201,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
             </select>
           </div>
 
-          {/* View Mode Buttons */}
           <div
             style={{
               display: 'flex',
@@ -274,7 +264,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
         </div>
       </div>
 
-      {/* Games Display Area */}
       {filteredGames.length > 0 ? (
         viewMode === 'list' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -364,7 +353,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({
           </div>
         )
       ) : (
-        /* Empty State */
         <div
           className="glass-section"
           style={{

@@ -22,7 +22,6 @@ class SoundEngine {
     this.volume = Math.max(0, Math.min(1, volume));
   }
 
-  // Soft tactile micro-tick on hovering cards / buttons
   public playHover() {
     if (!this.enabled || this.volume <= 0) return;
     const ctx = this.getContext();
@@ -54,7 +53,6 @@ class SoundEngine {
     } catch {}
   }
 
-  // Snappy glass / acrylic click on selecting items
   public playClick() {
     if (!this.enabled || this.volume <= 0) return;
     const ctx = this.getContext();
@@ -87,7 +85,6 @@ class SoundEngine {
     } catch {}
   }
 
-  // Subtle tab switch sound
   public playTab() {
     if (!this.enabled || this.volume <= 0) return;
     const ctx = this.getContext();
@@ -114,7 +111,6 @@ class SoundEngine {
     } catch {}
   }
 
-  // Cinematic game launch chord
   public playLaunch() {
     if (!this.enabled || this.volume <= 0) return;
     const ctx = this.getContext();
@@ -123,7 +119,6 @@ class SoundEngine {
     try {
       const now = ctx.currentTime;
 
-      // Sub-bass sweep
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
@@ -140,12 +135,11 @@ class SoundEngine {
       subOsc.start(now);
       subOsc.stop(now + 0.36);
 
-      // High glass chime
       const chimeOsc = ctx.createOscillator();
       const chimeGain = ctx.createGain();
       chimeOsc.type = 'triangle';
-      chimeOsc.frequency.setValueAtTime(587.33, now + 0.04); // D5
-      chimeOsc.frequency.setValueAtTime(880, now + 0.12); // A5
+      chimeOsc.frequency.setValueAtTime(587.33, now + 0.04);
+      chimeOsc.frequency.setValueAtTime(880, now + 0.12);
 
       const chimeVol = 0.08 * this.volume;
       chimeGain.gain.setValueAtTime(0, now);

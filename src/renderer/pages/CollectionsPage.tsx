@@ -50,7 +50,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
         </p>
       </header>
 
-      {/* Create New Collection Form */}
       <form onSubmit={handleCreate} className="glass-section" style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '28px' }}>
         <FolderPlus size={20} style={{ color: selectedColor, flexShrink: 0 }} />
         <input
@@ -85,7 +84,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
         </button>
       </form>
 
-      {/* Collections Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         {collections.map(col => {
           const isSelected = selectedColId === col.id;
@@ -148,7 +146,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
         })}
       </div>
 
-      {/* Selected Collection Games View */}
       {activeCollection && (
         <div className="glass-section view-transition" style={{ padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>

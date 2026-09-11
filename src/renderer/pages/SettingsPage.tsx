@@ -104,7 +104,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       )}
 
-      {/* Language Selector */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Globe size={18} style={{ color: 'var(--accent-primary)' }} />
@@ -160,7 +159,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* Tactile Audio (UI Sounds) */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Volume2 size={18} style={{ color: '#10B981' }} />
@@ -206,7 +204,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* Discord Rich Presence */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <MessageSquare size={18} style={{ color: '#5865F2' }} />
@@ -233,7 +230,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* SteamGridDB API Settings */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Sparkles size={18} style={{ color: 'var(--accent-primary)' }} />
@@ -267,7 +263,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* Theme Selector */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Palette size={18} style={{ color: 'var(--accent-primary)' }} />
@@ -319,7 +314,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* Glassmorphism & Shader Controls */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Sliders size={18} style={{ color: 'var(--accent-primary)' }} />
@@ -374,7 +368,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </section>
 
-      {/* Steam Integration Status */}
       <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -402,6 +395,48 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 {p}
               </span>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Radio size={18} style={{ color: '#5865F2' }} />
+            <div>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#fff' }}>
+                {language === 'ru' ? 'Discord Rich Presence и Live-статистика (GSI)' : 'Discord Rich Presence & Live Game Stats (GSI)'}
+              </h3>
+              <span style={{ fontSize: '12px', color: '#10B981', fontWeight: 500 }}>
+                {language === 'ru' ? '● Работает автоматически из коробки' : '● Works automatically out of the box'}
+              </span>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings.discordRPC !== false}
+            onChange={e => handleUpdate('discordRPC', e.target.checked)}
+            style={{ width: '18px', height: '18px', accentColor: '#5865F2', cursor: 'pointer' }}
+          />
+        </div>
+
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '14px', lineHeight: 1.5 }}>
+          {language === 'ru'
+            ? 'Вам не нужно ничего настраивать. Лаунчер автоматически определяет любые запущенные программы и утилиты (Soundpad, сторонние приложения и игры) и транслирует их в Discord. Для Dota 2 и CS2 в реальном времени передаются данные о герое, K/D/A, таймере и счете матча.'
+            : 'Zero configuration required. The launcher automatically detects any running tools (Soundpad, utilities, games) and displays them in Discord. For Dota 2 and CS2, real-time hero, K/D/A, match timer, and scores are streamed live.'}
+        </p>
+
+        <div style={{ background: 'rgba(88, 101, 242, 0.08)', border: '1px solid rgba(88, 101, 242, 0.25)', borderRadius: '8px', padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }}></span>
+            <strong style={{ fontSize: '12px', color: '#fff' }}>
+              {language === 'ru' ? 'Интеграция Valve GSI активна' : 'Valve GSI Integration Active'}
+            </strong>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            {language === 'ru'
+              ? 'Конфигурации установлены в папки Dota 2 и CS2. Локальный сервер запущен.'
+              : 'Configurations installed in Dota 2 and CS2 directories. Local server running.'}
           </div>
         </div>
       </section>

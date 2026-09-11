@@ -34,13 +34,13 @@ export interface Game {
   installed: boolean;
   favorite: boolean;
   playtimeMinutes: number;
-  lastPlayed?: number; // epoch ms
-  dateAdded: number; // epoch ms
+  lastPlayed?: number;
+  dateAdded: number;
   custom: boolean;
   artwork: {
-    cover?: string; // portrait 600x900
-    hero?: string; // landscape banner
-    logo?: string; // transparent title
+    cover?: string;
+    hero?: string;
+    logo?: string;
     icon?: string;
     background?: string;
   };
@@ -51,7 +51,7 @@ export interface Game {
   collections: string[];
   launchCount: number;
   totalSessionTimeMinutes: number;
-  sizeOnDisk?: number; // in bytes
+  sizeOnDisk?: number;
   requirements?: {
     minimum?: string;
     recommended?: string;
@@ -85,11 +85,11 @@ export interface CollectionRecord {
 
 export interface LauncherSettings {
   theme: 'obsidian' | 'oled' | 'graphite' | 'midnight' | 'crimson' | 'emerald' | 'purple';
-  glassIntensity: number; // 0.5 - 1.0
-  blurAmount: number; // 10 - 40 px
-  cardOpacity: number; // 0.4 - 0.95
-  borderOpacity: number; // 0.05 - 0.3
-  cornerRadius: number; // 8 - 20 px
+  glassIntensity: number;
+  blurAmount: number;
+  cardOpacity: number;
+  borderOpacity: number;
+  cornerRadius: number;
   animationIntensity: 'off' | 'subtle' | 'normal';
   dynamicBackground: boolean;
   startWithWindows: boolean;
@@ -102,7 +102,7 @@ export interface LauncherSettings {
   language: 'ru' | 'en';
   discordRPC: boolean;
   soundEnabled: boolean;
-  soundVolume: number; // 0.0 - 1.0
+  soundVolume: number;
   steamGridApiKey?: string;
 }
 
@@ -173,6 +173,9 @@ export interface StormPlayAPI {
   discord: {
     updateStatus: (activity: { state?: string; details?: string; gameName?: string }) => Promise<void>;
   };
+  gsi: {
+    getStats: () => Promise<any>;
+  };
   sessions: {
     getAll: () => Promise<SessionRecord[]>;
     getStats: () => Promise<LauncherStats>;
@@ -202,6 +205,7 @@ export interface StormPlayAPI {
     onGameStopped: (callback: (data: { gameId: string; session: SessionRecord }) => void) => () => void;
     onScanProgress: (callback: (progress: ScannerProgress) => void) => () => void;
     onGamesUpdated: (callback: (games: Game[]) => void) => () => void;
+    onGSIUpdate: (callback: (stats: any) => void) => () => void;
   };
 }
 

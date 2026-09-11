@@ -14,7 +14,6 @@ import { SteamGridModal } from './components/SteamGridModal';
 import { soundEngine } from './audio/soundEngine';
 import { translations, Language } from './i18n/translations';
 
-// Pages
 import { OverviewPage } from './pages/OverviewPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { GameDetailPage } from './pages/GameDetailPage';
@@ -37,7 +36,6 @@ export const App: React.FC = () => {
   const [scanProgress, setScanProgress] = useState<ScannerProgress | undefined>(undefined);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Modals
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isMiniOpen, setIsMiniOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -46,7 +44,6 @@ export const App: React.FC = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [steamGridGame, setSteamGridGame] = useState<Game | null>(null);
 
-  // Context Menu
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; game: Game } | null>(null);
 
   const addToast = useCallback((type: ToastMessage['type'], title: string, message?: string, duration?: number) => {
@@ -76,7 +73,6 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     const init = async () => {
       try {
@@ -92,7 +88,6 @@ export const App: React.FC = () => {
           setLanguage(appSettings.language);
         }
 
-        // Initialize tactile sound system
         soundEngine.setConfig(
           appSettings.soundEnabled !== false,
           appSettings.soundVolume ?? 0.75
@@ -105,7 +100,6 @@ export const App: React.FC = () => {
         setGames(allGames);
         setCollections(cols);
 
-        // Auto-detect multi-launchers (Epic Games, GOG) on startup so all games are unified instantly
         window.stormPlay.scanner.scanMultiLaunchers().then(updated => {
           if (updated && updated.length > 0) {
             setGames(updated);
@@ -118,7 +112,6 @@ export const App: React.FC = () => {
           document.body.className = `theme-${appSettings.theme}`;
         }
 
-        // If first launch has not completed, show onboarding
         if (!appSettings.firstLaunchDone) {
           setIsOnboardingOpen(true);
         }
@@ -130,7 +123,6 @@ export const App: React.FC = () => {
     init();
   }, []);
 
-  // Theme updater
   const handleUpdateTheme = (themeName: string) => {
     setSettings(prev => prev ? { ...prev, theme: themeName as LauncherSettings['theme'] } : null);
     document.documentElement.setAttribute('data-theme', themeName);
@@ -138,7 +130,6 @@ export const App: React.FC = () => {
     document.body.className = `theme-${themeName}`;
   };
 
-  // Language toggler
   const handleToggleLanguage = async () => {
     const nextLang: Language = language === 'ru' ? 'en' : 'ru';
     setLanguage(nextLang);
@@ -156,7 +147,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // IPC Event listeners
   useEffect(() => {
     const unsubProgress = window.stormPlay.events.onScanProgress((prog) => {
       setScanProgress(prog);
@@ -187,7 +177,6 @@ export const App: React.FC = () => {
     };
   }, [addToast, refreshGames, language]);
 
-  // Global hotkeys
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.code === 'KeyK') {
@@ -219,7 +208,6 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [contextMenu, isCmdOpen, isMiniOpen, isAddOpen, isScanOpen, isRandomOpen, selectedGame]);
 
-  // Handlers
   const handlePlayGame = async (game: Game) => {
     soundEngine.playLaunch();
     try {
@@ -402,7 +390,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Derived counts for sidebar
   const installedCount = games.filter(g => g.installed).length;
   const favoriteCount = games.filter(g => g.favorite).length;
   const steamCount = games.filter(g => g.source === 'steam').length;
@@ -410,7 +397,6 @@ export const App: React.FC = () => {
   const epicCount = games.filter(g => g.source === 'epic').length;
   const gogCount = games.filter(g => g.source === 'gog').length;
 
-  // Check if active page is any library category
   const isLibraryView = ['library', 'installed', 'favorites', 'recent', 'steam', 'custom', 'epic', 'gog'].includes(activePage);
 
   return (
@@ -430,13 +416,11 @@ export const App: React.FC = () => {
         if (contextMenu) setContextMenu(null);
       }}
     >
-      {/* Real-Time Ambient Fluid Shader in Background */}
       <BackgroundShader
         theme={settings?.theme || 'obsidian'}
         active={settings?.dynamicBackground !== false}
       />
 
-      {/* Frameless Custom Title Bar */}
       <TitleBar
         steamStatus={steamStatus}
         scanProgress={scanProgress}
@@ -448,13 +432,11 @@ export const App: React.FC = () => {
         onToggleLanguage={handleToggleLanguage}
       />
 
-      {/* Main Workspace Layout */}
       <div 
         key={`workspace-${language}`}
         className="lang-text-anim"
         style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}
       >
-        {/* Sleek Glass Sidebar */}
         <Sidebar
           activePage={activePage}
           onNavigate={(page: PageId) => {
@@ -471,7 +453,6 @@ export const App: React.FC = () => {
           language={language}
         />
 
-        {/* Dynamic Main Content Container */}
         <main
           style={{
             flex: 1,
@@ -545,7 +526,6 @@ export const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Right Click Context Menu */}
       {contextMenu && (
         <GameContextMenu
           x={contextMenu.x}
@@ -564,7 +544,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Command Palette (Ctrl+K) */}
       <CommandPalette
         isOpen={isCmdOpen}
         games={games}
@@ -592,7 +571,6 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Mini Mode Widget (Ctrl+Space) */}
       <MiniModeModal
         isOpen={isMiniOpen}
         games={games}
@@ -604,21 +582,18 @@ export const App: React.FC = () => {
         onOpenFullApp={() => setIsMiniOpen(false)}
       />
 
-      {/* Add Custom Game Modal */}
       <AddGameModal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSaveGame={handleSaveCustomGame}
       />
 
-      {/* Scan Folder Executables Modal */}
       <ScanGamesModal
         isOpen={isScanOpen}
         onClose={() => setIsScanOpen(false)}
         onAddGames={handleImportScannedGames}
       />
 
-      {/* "What Should I Play?" Modal */}
       <WhatShouldIPlayModal
         isOpen={isRandomOpen}
         games={games}
@@ -629,7 +604,6 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Onboarding / First Launch Modal */}
       {isOnboardingOpen && (
         <OnboardingModal
           progress={scanProgress}
@@ -637,7 +611,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* SteamGridDB 1-Click Artwork Picker Modal */}
       {steamGridGame && (
         <SteamGridModal
           game={steamGridGame}
@@ -655,7 +628,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Bottom-Left Notification Toasts (Auto-Dismissing) */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );

@@ -212,7 +212,6 @@ export const GameContextMenu: React.FC<GameContextMenuProps> = ({
         </button>
       )}
 
-      {/* Collections Sublist */}
       {collections.length > 0 && (
         <div style={{ margin: '4px 0', borderTop: '1px solid var(--border-subtle)', paddingTop: '4px' }}>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '2px 8px', textTransform: 'uppercase' }}>

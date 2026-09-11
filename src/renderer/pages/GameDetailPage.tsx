@@ -64,9 +64,7 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
 
   useEffect(() => {
     if (game.steamAppId) {
-      // Fetch achievements
       window.stormPlay.achievements.get(game.steamAppId).then(setAchievements).catch(() => {});
-      // Fetch screenshots
       window.stormPlay.screenshots.get(game.steamAppId).then(setScreenshots).catch(() => {});
     } else {
       setAchievements(null);
@@ -92,7 +90,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
 
   return (
     <div className="view-transition" style={{ position: 'relative', minHeight: '100%', paddingBottom: '60px' }}>
-      {/* Background Hero Image */}
       {coverImage && (
         <div
           style={{
@@ -127,9 +124,7 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
         </div>
       )}
 
-      {/* Main Content Container */}
       <div style={{ position: 'relative', zIndex: 1, padding: '32px 40px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Back Button */}
         <button
           onClick={() => {
             soundEngine.playClick();
@@ -149,9 +144,7 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
           <span>{t.back}</span>
         </button>
 
-        {/* Hero Section */}
         <div style={{ display: 'flex', gap: '36px', marginBottom: '32px', alignItems: 'flex-end' }}>
-          {/* Portrait Cover with Change Artwork Badge */}
           <div
             style={{
               position: 'relative',
@@ -200,7 +193,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
             </button>
           </div>
 
-          {/* Title & Primary Action Controls */}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
               <span
@@ -244,7 +236,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
               {game.name}
             </h1>
 
-            {/* Actions Bar */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
               <button
                 onClick={() => {
@@ -320,7 +311,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
           </div>
         </div>
 
-        {/* View Switcher Tabs (Overview, Achievements, Screenshots) */}
         <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '28px', paddingBottom: '12px' }}>
           <button
             onClick={() => {
@@ -402,10 +392,8 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
           )}
         </div>
 
-        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="view-transition">
-            {/* Metadata Spec Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
               <div className="glass-section" style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', marginBottom: '8px' }}>
@@ -438,7 +426,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
               </div>
             </div>
 
-            {/* Technical Details & Path */}
             <div className="glass-section" style={{ padding: '20px', marginBottom: '32px' }}>
               <h3 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: 600, color: '#fff' }}>
                 {translations[language].settings.steamPath}
@@ -453,7 +440,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
               )}
             </div>
 
-            {/* Collections Manager */}
             <div className="glass-section" style={{ padding: '20px' }}>
               <h3 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: 600, color: '#fff' }}>
                 {translations[language].collections.title}
@@ -493,12 +479,10 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
           </div>
         )}
 
-        {/* TAB 2: ACHIEVEMENTS */}
         {activeTab === 'achievements' && (
           <div className="view-transition">
             {achievements && achievements.total > 0 ? (
               <div>
-                {/* Progress Bar Header */}
                 <div className="glass-section" style={{ padding: '24px', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <span style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>
@@ -520,7 +504,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
                   </div>
                 </div>
 
-                {/* Achievements Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
                   {achievements.items.map(item => (
                     <div
@@ -581,7 +564,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
           </div>
         )}
 
-        {/* TAB 3: SCREENSHOTS */}
         {activeTab === 'screenshots' && (
           <div className="view-transition">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -636,7 +618,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
         )}
       </div>
 
-      {/* Lightbox Modal for Fullscreen Screenshot */}
       {lightboxImg && (
         <div
           style={{
@@ -665,7 +646,6 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
         </div>
       )}
 
-      {/* SteamGridDB Modal */}
       {isGridModalOpen && (
         <SteamGridModal
           game={game}

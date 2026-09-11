@@ -63,7 +63,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           Your personal local-first game hub. Scanning your Windows Steam libraries...
         </p>
 
-        {/* Progress Card */}
         <div
           style={{
             background: 'rgba(0,0,0,0.4)',

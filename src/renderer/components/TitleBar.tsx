@@ -66,7 +66,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         userSelect: 'none'
       }}
     >
-      {/* Brand & Steam Connection Status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }} className="app-region-no-drag">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div 
@@ -88,7 +87,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           </span>
         </div>
 
-        {/* Steam Status Badge */}
         <div 
           style={{
             display: 'flex',
@@ -122,7 +120,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </div>
       </div>
 
-      {/* Center Search Pill & Tools */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="app-region-no-drag">
         <button
           onClick={onOpenCommandPalette}
@@ -160,7 +157,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           }}>Ctrl K</kbd>
         </button>
 
-        {/* Sync Steam button */}
         <button
           onClick={onScanSteam}
           disabled={isScanning}
@@ -195,7 +191,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           <span key={`tb-scan-${language}`} className="lang-text-anim">{t.scan}</span>
         </button>
 
-        {/* Mini Mode Toggle */}
         <button
           onClick={onOpenMiniMode}
           style={{
@@ -225,7 +220,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           <span key={`tb-mini-${language}`} className="lang-text-anim">{t.mini}</span>
         </button>
 
-        {/* Quick Language Toggle Pill */}
         <button
           onClick={onToggleLanguage}
           className={langAnim ? 'lang-animate' : ''}
@@ -265,7 +259,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </button>
       </div>
 
-      {/* Window Controls */}
       <div style={{ display: 'flex', alignItems: 'center' }} className="app-region-no-drag">
         <button 
           onClick={handleMinimize}

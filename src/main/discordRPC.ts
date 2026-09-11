@@ -1,9 +1,7 @@
 import net from 'net';
+import { db } from './db';
 
-// Storm Launcher Discord Application ID (or generic gaming client ID)
-const CLIENT_ID = '1205168814781440050';
-
-interface DiscordActivity {
+export interface DiscordActivity {
   state?: string;
   details?: string;
   startTimestamp?: number;
@@ -14,15 +12,33 @@ interface DiscordActivity {
   buttons?: { label: string; url: string }[];
 }
 
-class DiscordRPC {
+export class DiscordRPC {
   private socket: net.Socket | null = null;
   private isConnected = false;
+  private isReady = false;
   private currentActivity: DiscordActivity | null = null;
   private retryTimer: NodeJS.Timeout | null = null;
   private enabled = true;
+  private clientId = '1539256220282785833';
 
   constructor() {
     this.connect();
+  }
+
+  public setClientId(newId: string) {
+    if (!newId || newId === this.clientId) return;
+    this.clientId = newId;
+    if (this.socket) {
+      this.socket.destroy();
+      this.socket = null;
+      this.isConnected = false;
+      this.isReady = false;
+    }
+    this.connect();
+  }
+
+  public getClientId(): string {
+    return this.clientId;
   }
 
   public setEnabled(val: boolean) {
@@ -33,6 +49,7 @@ class DiscordRPC {
         this.socket.destroy();
         this.socket = null;
         this.isConnected = false;
+        this.isReady = false;
       }
     } else {
       this.connect();
@@ -42,28 +59,36 @@ class DiscordRPC {
   public connect() {
     if (!this.enabled || this.isConnected) return;
 
-    // Try pipes discord-ipc-0 to discord-ipc-9
     const tryPipe = (pipeIndex: number) => {
       if (pipeIndex > 9 || !this.enabled) {
-        // Retry in 15 seconds
         if (!this.retryTimer) {
           this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
             this.connect();
-          }, 15000);
+          }, 10000);
         }
         return;
       }
 
-      const pipePath = `\\\\?\\pipe\\discord-ipc-${pipeIndex}`;
+      const pipePath = `\\\\.\\pipe\\discord-ipc-${pipeIndex}`;
       const sock = net.connect(pipePath, () => {
         this.socket = sock;
         this.isConnected = true;
         this.sendHandshake();
+      });
 
-        if (this.currentActivity) {
-          this.sendActivity(this.currentActivity);
-        }
+      sock.on('data', (buf) => {
+        try {
+          const len = buf.readInt32LE(4);
+          const raw = buf.toString('utf8', 8, 8 + len);
+          const msg = JSON.parse(raw);
+          if (msg.evt === 'READY') {
+            this.isReady = true;
+            if (this.currentActivity) {
+              this.sendActivity(this.currentActivity);
+            }
+          }
+        } catch {}
       });
 
       sock.on('error', () => {
@@ -73,6 +98,7 @@ class DiscordRPC {
 
       sock.on('close', () => {
         this.isConnected = false;
+        this.isReady = false;
         this.socket = null;
       });
     };
@@ -84,7 +110,7 @@ class DiscordRPC {
     if (!this.socket || !this.isConnected) return;
     const payload = JSON.stringify({
       v: 1,
-      client_id: CLIENT_ID
+      client_id: this.clientId
     });
     this.sendPacket(0, payload);
   }
@@ -104,8 +130,8 @@ class DiscordRPC {
   public setActivity(activity: DiscordActivity) {
     this.currentActivity = activity;
     if (!this.enabled) return;
-    if (!this.isConnected) {
-      this.connect();
+    if (!this.isConnected || !this.isReady) {
+      if (!this.isConnected) this.connect();
       return;
     }
     this.sendActivity(activity);
@@ -113,6 +139,19 @@ class DiscordRPC {
 
   private sendActivity(activity: DiscordActivity) {
     const nonce = Math.random().toString(36).slice(2);
+
+    const assets: any = {
+      large_text: activity.largeImageText || activity.details || 'Storm Launcher',
+      small_text: activity.smallImageText || 'Storm Launcher'
+    };
+
+    if (activity.largeImageKey && activity.largeImageKey.startsWith('http')) {
+      assets.large_image = activity.largeImageKey;
+    }
+    if (activity.smallImageKey && activity.smallImageKey.startsWith('http')) {
+      assets.small_image = activity.smallImageKey;
+    }
+
     const payload = JSON.stringify({
       cmd: 'SET_ACTIVITY',
       args: {
@@ -121,12 +160,7 @@ class DiscordRPC {
           state: activity.state,
           details: activity.details,
           timestamps: activity.startTimestamp ? { start: Math.floor(activity.startTimestamp / 1000) } : undefined,
-          assets: {
-            large_image: activity.largeImageKey || 'storm_logo',
-            large_text: activity.largeImageText || 'Storm Launcher',
-            small_image: activity.smallImageKey,
-            small_text: activity.smallImageText
-          },
+          assets,
           buttons: activity.buttons
         }
       },
@@ -138,7 +172,7 @@ class DiscordRPC {
 
   public clearActivity() {
     this.currentActivity = null;
-    if (!this.socket || !this.isConnected) return;
+    if (!this.socket || !this.isConnected || !this.isReady) return;
     const nonce = Math.random().toString(36).slice(2);
     const payload = JSON.stringify({
       cmd: 'SET_ACTIVITY',
@@ -151,24 +185,43 @@ class DiscordRPC {
     this.sendPacket(1, payload);
   }
 
-  public setInGame(gameName: string, startTime: number = Date.now()) {
+  public setInGame(gameName: string, startTime: number = Date.now(), imageUrl?: string, isTool = false) {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    const details = isRu
+      ? (isTool ? `Использует ${gameName}` : `Играет в ${gameName}`)
+      : (isTool ? `Using ${gameName}` : `Playing ${gameName}`);
+    const state = isRu ? 'через Storm Launcher' : 'via Storm Launcher';
+
     this.setActivity({
-      details: `Playing ${gameName}`,
-      state: 'via Storm Launcher',
+      details,
+      state,
       startTimestamp: startTime,
-      largeImageKey: 'game_pad',
+      largeImageKey: imageUrl,
       largeImageText: gameName,
-      smallImageKey: 'storm_logo',
       smallImageText: 'Storm Launcher'
     });
   }
 
   public setIdle(gameCount: number) {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    const details = isRu ? 'Просматривает библиотеку' : 'Browsing Game Library';
+    const state = isRu ? `${gameCount} игр в каталоге` : `${gameCount} titles cataloged`;
+
     this.setActivity({
-      details: 'Browsing Game Library',
-      state: `${gameCount} titles cataloged`,
-      largeImageKey: 'storm_logo',
-      largeImageText: 'Storm Launcher v1.0.0'
+      details,
+      state,
+      largeImageText: 'Storm Launcher',
+      smallImageText: 'Storm Launcher'
     });
   }
 }

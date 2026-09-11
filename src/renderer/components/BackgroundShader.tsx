@@ -18,11 +18,9 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
     let animationFrameId: number;
     let time = 0;
 
-    // Internal buffer resolution
     canvas.width = 400;
     canvas.height = 225;
 
-    // Perfectly balanced, soft atmospheric ambient tones (neither blinding nor invisible)
     const getPalette = () => {
       switch (theme) {
         case 'crimson':
@@ -85,7 +83,7 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
               { r: 10, g: 10, b: 16, a: 0.25 }
             ]
           };
-        default: // obsidian
+        default:
           return {
             base: '#030306',
             orbs: [
@@ -104,11 +102,9 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
       const h = canvas.height;
       const palette = getPalette();
 
-      // Clear with dark base tone
       ctx.fillStyle = palette.base;
       ctx.fillRect(0, 0, w, h);
 
-      // Orb 1: Upper-left slow drift
       const o1 = palette.orbs[0];
       const x1 = w * 0.32 + Math.sin(time * 0.6) * (w * 0.2);
       const y1 = h * 0.35 + Math.cos(time * 0.5) * (h * 0.2);
@@ -123,7 +119,6 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
       ctx.arc(x1, y1, r1, 0, Math.PI * 2);
       ctx.fill();
 
-      // Orb 2: Bottom-right sweeping glow
       const o2 = palette.orbs[1];
       const x2 = w * 0.7 + Math.cos(time * 0.55) * (w * 0.22);
       const y2 = h * 0.65 + Math.sin(time * 0.7) * (h * 0.2);
@@ -138,7 +133,6 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
       ctx.arc(x2, y2, r2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Orb 3: Center subtle aurora accent
       const o3 = palette.orbs[2];
       const x3 = w * 0.5 + Math.sin(time * 0.9 + 1.5) * (w * 0.25);
       const y3 = h * 0.5 + Math.cos(time * 0.75 + 1) * (h * 0.22);
@@ -153,7 +147,6 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
       ctx.arc(x3, y3, r3, 0, Math.PI * 2);
       ctx.fill();
 
-      // Orb 4: Bottom-left deep ambient anchor
       const o4 = palette.orbs[3];
       const x4 = w * 0.2 + Math.cos(time * 0.45 + 2) * (w * 0.15);
       const y4 = h * 0.78 + Math.sin(time * 0.55 + 1.2) * (h * 0.15);
@@ -201,7 +194,6 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
           opacity: 0.8
         }}
       />
-      {/* Soft Vignette Overlay for crisp readable text */}
       <div
         style={{
           position: 'absolute',

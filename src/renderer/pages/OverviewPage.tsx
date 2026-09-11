@@ -44,7 +44,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
   return (
     <div className="view-transition" style={{ padding: '28px 36px', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Featured Game Hero Banner */}
       {featuredGame && (
         <section
           style={{
@@ -61,7 +60,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             padding: '36px'
           }}
         >
-          {/* Background Hero Artwork */}
           {featuredGame.artwork.hero || featuredGame.artwork.cover ? (
             <img
               src={featuredGame.artwork.hero || featuredGame.artwork.cover}
@@ -78,7 +76,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             />
           ) : null}
 
-          {/* Vignette Overlay */}
           <div
             style={{
               position: 'absolute',
@@ -87,7 +84,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             }}
           />
 
-          {/* Content */}
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
               <span
@@ -146,7 +142,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </section>
       )}
 
-      {/* Recent Activity Section */}
       {recentGames.length > 0 && (
         <section style={{ marginBottom: '36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -198,7 +193,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </section>
       )}
 
-      {/* All Games Grid Preview */}
       <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

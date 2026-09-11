@@ -10,7 +10,6 @@ interface SteamAppCacheEntry {
   type?: string;
 }
 
-// Fetch helper with timeout
 async function fetchSteamAppBasic(appId: number): Promise<SteamAppCacheEntry | null> {
   return new Promise((resolve) => {
     const req = https.get(
@@ -40,7 +39,6 @@ async function fetchSteamAppBasic(appId: number): Promise<SteamAppCacheEntry | n
   });
 }
 
-// Batch resolver with concurrency limit
 async function resolveSteamAppNames(
   appIds: number[],
   cache: Record<string, SteamAppCacheEntry>,
@@ -80,7 +78,6 @@ async function resolveSteamAppNames(
   }
 }
 
-// Valve VDF / ACF Parser
 export function parseVDF(text: string): any {
   const lines = text.split(/\r?\n/);
   const root: any = {};
@@ -95,7 +92,6 @@ export function parseVDF(text: string): any {
     } else if (line === '}') {
       if (stack.length > 1) stack.pop();
     } else {
-      // Matches "key" "value" or "key" (followed by object)
       const matches = line.match(/"([^"]+)"(?:\s+"([^"]*)")?/);
       if (matches) {
         const key = matches[1];
@@ -129,7 +125,6 @@ export class SteamScannerService {
       return this.detectedSteamPath;
     }
 
-    // 1. Check Windows Registry via PowerShell
     try {
       const regCmd = 'Get-ItemProperty -Path "HKCU:\\Software\\Valve\\Steam", "HKLM:\\Software\\Valve\\Steam", "HKLM:\\Software\\WOW6432Node\\Valve\\Steam" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty SteamPath -First 1';
       const out = execSync(`powershell -NoProfile -Command "${regCmd}"`, { encoding: 'utf8', timeout: 3000 }).trim();
@@ -139,7 +134,6 @@ export class SteamScannerService {
       }
     } catch {}
 
-    // 2. Check standard installation folders
     const standardPaths = [
       'C:\\Program Files (x86)\\Steam',
       'C:\\Program Files\\Steam',
@@ -190,7 +184,6 @@ export class SteamScannerService {
       return { games: [], progress };
     }
 
-    // Step 2: Detect all libraries from libraryfolders.vdf
     progress.stage = 'libraries';
     progress.message = 'Reading Steam libraries configuration...';
     onProgress?.(progress);
@@ -224,7 +217,6 @@ export class SteamScannerService {
     progress.message = `Found ${libraries.length} Steam ${libraries.length === 1 ? 'library' : 'libraries'}. Loading installed manifests...`;
     onProgress?.(progress);
 
-    // Step 3: Load real playtime and owned app IDs from userdata/*/config/localconfig.vdf
     const playtimeMap = new Map<number, { playtime: number; lastPlayed?: number }>();
     const ownedAppsMap = new Map<number, { playtime: number; lastPlayed?: number }>();
     const userdataDir = path.join(steamPath, 'userdata');
@@ -239,13 +231,11 @@ export class SteamScannerService {
           const localConfigPath = path.join(userDirPath, 'config', 'localconfig.vdf');
           if (fs.existsSync(localConfigPath)) {
             const text = fs.readFileSync(localConfigPath, 'utf8');
-            // Extract apps inside Apps
             const appRegex = /"(\d{2,8})"\s*\{([^}]*?)\}/gs;
             let m;
             while ((m = appRegex.exec(text)) !== null) {
               const appId = Number(m[1]);
               if (appId < 10 || appId > 40000000) continue;
-              // Skip known non-game utilities/runtimes
               if ([760, 2371090, 228980, 228983, 228985, 228986, 228987, 228988, 228989, 228990, 229000, 229001, 229002].includes(appId)) continue;
 
               const block = m[2];
@@ -262,7 +252,6 @@ export class SteamScannerService {
             }
           }
 
-          // Also check user librarycache json files
           const libCacheDir = path.join(userDirPath, 'config', 'librarycache');
           if (fs.existsSync(libCacheDir)) {
             for (const f of fs.readdirSync(libCacheDir)) {
@@ -280,7 +269,6 @@ export class SteamScannerService {
       }
     }
 
-    // Step 4: Scan each library for appmanifest_*.acf (Installed games)
     progress.stage = 'reading_games';
     const foundGamesMap = new Map<string, Game>();
     const cacheDir = db.getCacheDir();
@@ -308,7 +296,6 @@ export class SteamScannerService {
             const lastUpdated = appState.LastUpdated ? Number(appState.LastUpdated) * 1000 : Date.now();
             const lastPlayedRaw = appState.LastPlayed ? Number(appState.LastPlayed) * 1000 : undefined;
 
-            // Skip internal Steam runtimes / redistributables to keep game library clean
             if (
               gameName.toLowerCase().includes('steamworks common') ||
               gameName.toLowerCase().includes('steam linux runtime') ||
@@ -320,18 +307,15 @@ export class SteamScannerService {
             const stateFlags = Number(appState.StateFlags) || 0;
             const isInstalled = fs.existsSync(fullInstallPath) && (stateFlags === 4 || stateFlags === 6 || stateFlags === 1026);
 
-            // Playtime lookup
             const ptData = playtimeMap.get(appId);
             const playtimeMinutes = ptData?.playtime || 0;
             const lastPlayed = ptData?.lastPlayed || (lastPlayedRaw && lastPlayedRaw > 0 ? lastPlayedRaw : undefined);
 
-            // Locate local Steam artwork if available
             const localArtDir = path.join(steamPath, 'appcache', 'librarycache', String(appId));
             let coverUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/library_600x900_2x.jpg`;
             let heroUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/library_hero.jpg`;
             let logoUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/logo.png`;
 
-            // Check if local cache exists
             if (fs.existsSync(localArtDir)) {
               const localCover = path.join(localArtDir, 'library_600x900.jpg');
               const localHero = path.join(localArtDir, 'library_hero.jpg');
@@ -342,7 +326,6 @@ export class SteamScannerService {
               if (fs.existsSync(localLogo)) logoUrl = `play://local/${localLogo.replace(/\\/g, '/')}`;
             }
 
-            // Find main executable in common/<installdir>
             let executablePath: string | undefined = undefined;
             if (fs.existsSync(fullInstallPath)) {
               try {
@@ -401,7 +384,6 @@ export class SteamScannerService {
       }
     }
 
-    // Step 5: Process uninstalled games from user's Steam library
     progress.stage = 'reading_games';
     progress.message = 'Loading uninstalled games from Steam library...';
     onProgress?.(progress);
@@ -414,7 +396,6 @@ export class SteamScannerService {
       } catch {}
     }
 
-    // Seed nameCache with games we already know from DB or installed scan
     for (const g of foundGamesMap.values()) {
       if (g.steamAppId && g.name && !g.name.startsWith('Steam App ')) {
         nameCache[String(g.steamAppId)] = { name: g.name, type: 'game' };
@@ -428,7 +409,6 @@ export class SteamScannerService {
       }
     }
 
-    // Determine missing AppIDs to resolve
     const uninstalledAppIds: number[] = [];
     for (const [appId] of ownedAppsMap) {
       if (!foundGamesMap.has(`steam_${appId}`)) {
@@ -437,7 +417,6 @@ export class SteamScannerService {
     }
 
     if (uninstalledAppIds.length > 0) {
-      // Resolve any missing app names in parallel
       await resolveSteamAppNames(uninstalledAppIds, nameCache, nameCacheFile, (count) => {
         progress.message = `Resolving Steam library games (${count} cached)...`;
         onProgress?.(progress);
@@ -447,12 +426,10 @@ export class SteamScannerService {
         const cacheEntry = nameCache[String(appId)];
         const appInfo = ownedAppsMap.get(appId);
 
-        // Skip non-game DLC packages unless explicitly known as a game/app
         if (cacheEntry?.type && ['dlc', 'advertising', 'series', 'episode'].includes(cacheEntry.type.toLowerCase())) {
           continue;
         }
 
-        // If no name resolved and no local artwork / playtime, skip obscure DLC/tools
         const localArtDir = path.join(steamPath, 'appcache', 'librarycache', String(appId));
         const hasLocalCache = fs.existsSync(localArtDir);
         const hasPlaytime = (appInfo?.playtime || 0) > 0;
@@ -463,7 +440,6 @@ export class SteamScannerService {
 
         const gameName = cacheEntry?.name || `Steam App ${appId}`;
 
-        // Skip internal runtimes
         if (
           gameName.toLowerCase().includes('steamworks common') ||
           gameName.toLowerCase().includes('steam linux runtime') ||
@@ -518,7 +494,6 @@ export class SteamScannerService {
     progress.gamesDetected = uniqueGames.length;
     progress.gamesInstalled = uniqueGames.filter(g => g.installed).length;
 
-    // Step 6: Save games to database
     db.upsertGames(uniqueGames);
 
     progress.stage = 'ready';

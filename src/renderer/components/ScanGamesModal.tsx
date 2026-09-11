@@ -129,7 +129,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
@@ -159,9 +158,7 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
           </button>
         </div>
 
-        {/* Action Buttons Row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-          {/* Deep Disk Scanner Button */}
           <button
             onClick={handleDeepScanDisks}
             disabled={isScanning}
@@ -183,7 +180,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
             <span>{language === 'ru' ? 'Глубокий поиск на всех дисках' : 'Deep Scan All Disks'}</span>
           </button>
 
-          {/* Multi-Launcher Scanner Button */}
           <button
             onClick={handleScanLaunchers}
             disabled={isScanning}
@@ -206,7 +202,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
           </button>
         </div>
 
-        {/* Directory Picker Bar */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
             {language === 'ru' ? 'Или выберите конкретную папку с играми (например D:\\Games):' : 'Or select a specific folder (e.g. D:\\Games):'}
@@ -239,7 +234,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
           </div>
         </div>
 
-        {/* Scanning Status */}
         {isScanning && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '8px', marginBottom: '16px' }}>
             <RefreshCw size={16} className="spin" style={{ color: 'var(--accent-primary)' }} />
@@ -247,7 +241,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
           </div>
         )}
 
-        {/* Candidates List */}
         <div style={{ flex: 1, overflowY: 'auto', minHeight: '180px', marginBottom: '20px' }}>
           {candidates.length === 0 && !isScanning ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
@@ -321,7 +314,6 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
           )}
         </div>
 
-        {/* Footer Actions */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
           <button onClick={onClose} className="btn btn-secondary">
             {language === 'ru' ? 'Отмена' : 'Cancel'}

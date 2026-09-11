@@ -41,7 +41,6 @@ export const MiniModeModal: React.FC<MiniModeModalProps> = ({
       }}
       className="fade-in"
     >
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -67,7 +66,6 @@ export const MiniModeModal: React.FC<MiniModeModalProps> = ({
         </div>
       </div>
 
-      {/* Quick Launch List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
           Quick Launch

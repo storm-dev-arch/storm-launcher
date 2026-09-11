@@ -51,7 +51,6 @@ export const GameCard: React.FC<GameCardProps> = ({
         maxWidth: '220px'
       }}
     >
-      {/* Cover Artwork Container */}
       <div
         style={{
           position: 'relative',
@@ -77,7 +76,6 @@ export const GameCard: React.FC<GameCardProps> = ({
             }}
           />
         ) : (
-          /* Fallback typography mark */
           <div
             style={{
               width: '100%',
@@ -115,7 +113,6 @@ export const GameCard: React.FC<GameCardProps> = ({
           </div>
         )}
 
-        {/* Top Badges: Favorite & Source */}
         <div
           style={{
             position: 'absolute',
@@ -174,7 +171,6 @@ export const GameCard: React.FC<GameCardProps> = ({
           </button>
         </div>
 
-        {/* Hover Quick-Play Overlay */}
         <div
           className="hover-play-overlay"
           style={{
@@ -221,7 +217,6 @@ export const GameCard: React.FC<GameCardProps> = ({
           </button>
         </div>
 
-        {/* Installed / In Library indicator badge */}
         {game.installed ? (
           <div
             style={{
@@ -267,7 +262,6 @@ export const GameCard: React.FC<GameCardProps> = ({
         )}
       </div>
 
-      {/* Card Info Footer */}
       <div style={{ padding: '12px 14px' }}>
         <h4
           style={{

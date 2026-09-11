@@ -41,11 +41,14 @@ export class GameLauncherService {
       return { success: false, error: 'Game is not installed.' };
     }
 
-    // Update Discord Rich Presence
-    discordRPC.setInGame(game.name, startTime);
+    const coverUrl = (game.artwork?.cover && game.artwork.cover.startsWith('http'))
+      ? game.artwork.cover
+      : (game.artwork?.icon && game.artwork.icon.startsWith('http'))
+        ? game.artwork.icon
+        : undefined;
+    discordRPC.setInGame(game.name, startTime, coverUrl);
 
     if (game.source === 'steam' && game.steamAppId) {
-      // Launch via Steam protocol URL
       try {
         await shell.openExternal(`steam://rungameid/${game.steamAppId}`);
         this.activeGames.set(game.id, runningInfo);
@@ -60,7 +63,6 @@ export class GameLauncherService {
         return { success: false, error: `Failed to launch Steam game: ${err?.message || err}` };
       }
     } else if (game.source === 'epic' && game.launchCommand) {
-      // Launch via Epic Games URI
       try {
         await shell.openExternal(game.launchCommand);
         this.activeGames.set(game.id, runningInfo);
@@ -75,7 +77,6 @@ export class GameLauncherService {
         return { success: false, error: `Failed to launch Epic game: ${err?.message || err}` };
       }
     } else {
-      // Custom executable game or GOG/Ubisoft direct exe
       if (!game.executable || !fs.existsSync(game.executable)) {
         discordRPC.setIdle(db.getGames().length);
         return {
@@ -131,7 +132,6 @@ export class GameLauncherService {
 
     this.activeGames.delete(gameId);
 
-    // Reset Discord to idle state
     discordRPC.setIdle(db.getGames().length);
 
     const game = db.getGame(gameId);

@@ -13,7 +13,6 @@ export class SteamGridDBService {
     const settings = db.getSettings();
     const apiKey = settings.steamGridApiKey;
 
-    // 1. If user provided a SteamGridDB API key, use official SGDB API
     if (apiKey) {
       try {
         const gameId = await this.findSGDBGameId(query, apiKey);
@@ -37,7 +36,6 @@ export class SteamGridDBService {
       }
     }
 
-    // 2. High-speed fallback: Query Steam Store search to find matching AppID and return verified artwork
     return this.searchSteamPublicAssets(query, artType);
   }
 
@@ -53,7 +51,6 @@ export class SteamGridDBService {
   private async searchSteamPublicAssets(query: string, artType: 'cover' | 'hero' | 'logo'): Promise<SteamGridArtItem[]> {
     const items: SteamGridArtItem[] = [];
     try {
-      // Search Steam Store API
       const searchUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(query)}&l=english&cc=US`;
       const searchRes = await this.getJson(searchUrl);
 
@@ -110,7 +107,6 @@ export class SteamGridDBService {
     const game = db.getGame(gameId);
     if (!game) throw new Error('Game not found');
 
-    // Download image to local covers directory
     const coversDir = path.join(db.getCacheDir(), 'covers');
     if (!fs.existsSync(coversDir)) {
       fs.mkdirSync(coversDir, { recursive: true });

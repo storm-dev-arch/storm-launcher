@@ -12,7 +12,6 @@ export class AchievementEngine {
     }
 
     try {
-      // Query public Steam community XML schema
       const xml = await this.fetchUrl(`https://steamcommunity.com/stats/${steamAppId}/achievements/?xml=1`);
 
       const items: AchievementItem[] = [];
@@ -43,7 +42,6 @@ export class AchievementEngine {
       this.cache.set(steamAppId, result);
       return { total, unlocked, items };
     } catch {
-      // Fallback placeholder / mock if offline or private
       return {
         total: 0,
         unlocked: 0,
