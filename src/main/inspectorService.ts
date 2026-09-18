@@ -357,9 +357,11 @@ export class InspectorService {
     const isRu = lang === 'ru';
 
     // Parallel fetch with graceful failure handling
-    const [profileData, wlData, heroesData, recentMatchesData] = await Promise.all([
+    const [profileData, wlData, rankedWlData, turboWlData, heroesData, recentMatchesData] = await Promise.all([
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}`),
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl`),
+      httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?lobby_type=7`),
+      httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?game_mode=23`),
       httpsGetJson<any[]>(`https://api.opendota.com/api/players/${accountId}/heroes`),
       httpsGetJson<any[]>(`https://api.opendota.com/api/players/${accountId}/recentMatches`)
     ]);
@@ -392,6 +394,16 @@ export class InspectorService {
     const losses = wlData?.lose ?? 0;
     const totalGames = wins + losses;
     const overallWinrate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+
+    const rankedWins = rankedWlData?.win ?? 0;
+    const rankedLosses = rankedWlData?.lose ?? 0;
+    const rankedGames = rankedWins + rankedLosses;
+    const rankedWinrate = rankedGames > 0 ? Math.round((rankedWins / rankedGames) * 100) : undefined;
+
+    const turboWins = turboWlData?.win ?? 0;
+    const turboLosses = turboWlData?.lose ?? 0;
+    const turboGames = turboWins + turboLosses;
+    const turboWinrate = turboGames > 0 ? Math.round((turboWins / turboGames) * 100) : undefined;
 
     // Check if profile is private (Dota match history hidden in game settings)
     const isPrivate = totalGames === 0 && (!recentMatchesData || recentMatchesData.length === 0);
@@ -448,6 +460,10 @@ export class InspectorService {
       accountId,
       totalGames,
       overallWinrate,
+      rankedWinrate,
+      rankedGames,
+      turboWinrate,
+      turboGames,
       rankTier,
       leaderboardRank,
       topHeroes,
@@ -472,6 +488,10 @@ export class InspectorService {
       losses,
       totalGames,
       overallWinrate,
+      rankedWinrate,
+      rankedGames,
+      turboWinrate,
+      turboGames,
       topHeroes,
       recentMatches,
       smurfAnalysis
@@ -485,6 +505,10 @@ export class InspectorService {
     _accountId: number,
     totalGames: number,
     overallWinrate: number,
+    rankedWinrate: number | undefined,
+    rankedGames: number | undefined,
+    turboWinrate: number | undefined,
+    turboGames: number | undefined,
     rankTier: number | undefined,
     _leaderboardRank: number | undefined,
     topHeroes: PlayerHeroStats[],
@@ -495,18 +519,20 @@ export class InspectorService {
     if (isPrivate) {
       return {
         isSmurfSuspect: false,
+        smurfChancePercent: 0,
         threatLevel: 'low',
-        confidenceScore: 10,
+        confidenceScore: 0,
         reasons: [isRu ? 'Профиль закрыт в настройках Dota 2' : 'Profile is private in Dota 2 settings'],
         winStreak: 0,
         loseStreak: 0,
         isOneTrickPony: false,
-        recentWinrate: 0
+        recentWinrate: 0,
+        summaryHeadline: isRu ? '🔒 Профиль закрыт настройками приватности' : '🔒 Match history hidden by player'
       };
     }
 
     const reasons: string[] = [];
-    let threatPoints = 0;
+    let smurfScore = 5; // Base probability 5%
 
     // Calculate streaks from recent matches (index 0 is most recent)
     let winStreak = 0;
@@ -536,14 +562,14 @@ export class InspectorService {
     // Rule 1: High rank with very few games (smurf / booster)
     const tier = rankTier ? Math.floor(rankTier / 10) : 0;
     if (totalGames > 0 && totalGames < 500 && tier >= 6) { // Ancient+ under 500 games
-      threatPoints += 60;
+      smurfScore += 50;
       reasons.push(
         isRu
-          ? `Подозрительно мало игр (${totalGames}) при высоком ранге`
-          : `Unusually low games (${totalGames}) for high rank`
+          ? `Мало игр (${totalGames}) при высоком ранге`
+          : `Few games (${totalGames}) for high rank`
       );
-    } else if (totalGames > 0 && totalGames < 300 && tier >= 4) { // Archon+ under 300 games
-      threatPoints += 35;
+    } else if (totalGames > 0 && totalGames < 350 && tier >= 4) { // Archon+ under 350 games
+      smurfScore += 30;
       reasons.push(
         isRu
           ? `Свежий аккаунт: всего ${totalGames} матчей`
@@ -551,26 +577,49 @@ export class InspectorService {
       );
     }
 
-    // Rule 2: High overall winrate
-    if (totalGames >= 30 && overallWinrate >= 65) {
-      threatPoints += 30;
-      reasons.push(
-        isRu
-          ? `Высокий общий винрейт: ${overallWinrate}% за ${totalGames} игр`
-          : `High overall winrate: ${overallWinrate}% across ${totalGames} games`
-      );
+    // Rule 2: Ranked winrate
+    if (rankedWinrate !== undefined && (rankedGames || 0) >= 15) {
+      if (rankedWinrate >= 68) {
+        smurfScore += 30;
+        reasons.push(
+          isRu
+            ? `Высокий винрейт в рейтинге: ${rankedWinrate}% (${rankedGames} игр)`
+            : `High ranked winrate: ${rankedWinrate}% (${rankedGames} games)`
+        );
+      } else if (rankedWinrate >= 60) {
+        smurfScore += 15;
+      }
     }
 
-    // Rule 3: Recent winstreak or dominant form
+    // Rule 3: Turbo winrate
+    if (turboWinrate !== undefined && (turboGames || 0) >= 15) {
+      if (turboWinrate >= 65) {
+        smurfScore += 25;
+        reasons.push(
+          isRu
+            ? `Высокий турбо винрейт: ${turboWinrate}% (${turboGames} игр)`
+            : `High turbo winrate: ${turboWinrate}% (${turboGames} games)`
+        );
+      } else if (turboWinrate >= 60) {
+        smurfScore += 10;
+      }
+    }
+
+    // Rule 4: High overall winrate
+    if (totalGames >= 30 && overallWinrate >= 64) {
+      smurfScore += 20;
+    }
+
+    // Rule 5: Recent winstreak or dominant form
     if (winStreak >= 4) {
-      threatPoints += Math.min(30, winStreak * 6);
+      smurfScore += Math.min(25, winStreak * 5);
       reasons.push(
         isRu
           ? `🔥 Винстрик: ${winStreak} побед подряд!`
           : `🔥 Win streak: ${winStreak} wins in a row!`
       );
     } else if (recentMatches.length >= 10 && recentWinrate >= 75) {
-      threatPoints += 20;
+      smurfScore += 15;
       reasons.push(
         isRu
           ? `⚡ Горячая форма: ${recentWinrate}% за последние 20 игр`
@@ -578,7 +627,7 @@ export class InspectorService {
       );
     }
 
-    // Rule 4: Losestreak / tilt warning
+    // Rule 6: Losestreak / tilt warning
     if (loseStreak >= 4) {
       reasons.push(
         isRu
@@ -587,30 +636,29 @@ export class InspectorService {
       );
     }
 
-    // Rule 5: Signature Hero One-Trick-Pony (OTP)
+    // Rule 7: Signature Hero One-Trick-Pony (OTP)
     let isOneTrickPony = false;
     let signatureHeroAlert: string | undefined = undefined;
 
     if (topHeroes.length > 0) {
       const best = topHeroes[0];
-      if (best.games >= 50 && best.winrate >= 60) {
-        const ratio = totalGames > 0 ? (best.games / totalGames) : 0;
-        if (ratio >= 0.25 || best.games >= 150) {
-          isOneTrickPony = true;
-          threatPoints += 25;
-          signatureHeroAlert = isRu
-            ? `Сигнатурка: ${best.heroName} (${best.games} игр, ${best.winrate}% WR)`
-            : `Signature: ${best.heroName} (${best.games} games, ${best.winrate}% WR)`;
-          reasons.push(signatureHeroAlert);
-        }
+      if (best.games >= 30 && best.winrate >= 62) {
+        isOneTrickPony = true;
+        smurfScore += 15;
+        signatureHeroAlert = isRu
+          ? `Сигнатурка: ${best.heroName} (${best.games} игр, ${best.winrate}% WR)`
+          : `Signature: ${best.heroName} (${best.games} games, ${best.winrate}% WR)`;
+        reasons.push(signatureHeroAlert);
       }
     }
 
-    const isSmurfSuspect = threatPoints >= 50 || (totalGames < 400 && overallWinrate >= 64);
+    const smurfChancePercent = Math.min(98, Math.max(5, smurfScore));
+    const isSmurfSuspect = smurfChancePercent >= 50;
+
     let threatLevel: 'low' | 'medium' | 'high' = 'low';
-    if (threatPoints >= 60 || winStreak >= 6) {
+    if (smurfChancePercent >= 65 || winStreak >= 5) {
       threatLevel = 'high';
-    } else if (threatPoints >= 30 || winStreak >= 3 || recentWinrate >= 70) {
+    } else if (smurfChancePercent >= 35 || winStreak >= 3 || recentWinrate >= 65) {
       threatLevel = 'medium';
     }
 
@@ -620,8 +668,31 @@ export class InspectorService {
     if (totalGames > 500) confidenceScore = 85;
     if (totalGames > 1500) confidenceScore = 95;
 
+    // Summary Headline for glanceable HUD
+    const topHero = topHeroes[0];
+    const topHeroStr = topHero ? `${topHero.heroName} (${topHero.winrate}% WR)` : '';
+    const turboStr = turboWinrate ? `${isRu ? 'Турбо' : 'Turbo'} ${turboWinrate}% WR` : '';
+    const rankedStr = rankedWinrate ? `${isRu ? 'Рейтинг' : 'Ranked'} ${rankedWinrate}% WR` : '';
+    const wrParts = [rankedStr, turboStr].filter(Boolean).join(' • ');
+
+    let summaryHeadline = '';
+    if (isSmurfSuspect) {
+      summaryHeadline = isRu
+        ? `🚨 Высокий шанс смурфа (${smurfChancePercent}%)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • Сигнатурка: ${topHeroStr}` : ''}`
+        : `🚨 High smurf chance (${smurfChancePercent}%)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • Signature: ${topHeroStr}` : ''}`;
+    } else if (threatLevel === 'medium') {
+      summaryHeadline = isRu
+        ? `⚠️ Опасный игрок (${smurfChancePercent}% смурф)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • ${topHeroStr}` : ''}`
+        : `⚠️ Threat player (${smurfChancePercent}% smurf)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • ${topHeroStr}` : ''}`;
+    } else {
+      summaryHeadline = isRu
+        ? `Обычный игрок (${smurfChancePercent}% смурф)${wrParts ? ` • ${wrParts}` : ` • ${overallWinrate}% WR`}${topHeroStr ? ` • ${topHeroStr}` : ''}`
+        : `Normal player (${smurfChancePercent}% smurf)${wrParts ? ` • ${wrParts}` : ` • ${overallWinrate}% WR`}${topHeroStr ? ` • ${topHeroStr}` : ''}`;
+    }
+
     return {
       isSmurfSuspect,
+      smurfChancePercent,
       threatLevel,
       confidenceScore,
       reasons,
@@ -629,7 +700,12 @@ export class InspectorService {
       loseStreak,
       isOneTrickPony,
       signatureHeroAlert,
-      recentWinrate
+      recentWinrate,
+      rankedWinrate,
+      rankedGames,
+      turboWinrate,
+      turboGames,
+      summaryHeadline
     };
   }
 
@@ -698,16 +774,19 @@ export class InspectorService {
       recentMatches: [],
       smurfAnalysis: {
         isSmurfSuspect: false,
+        smurfChancePercent: 0,
         threatLevel: 'low',
         confidenceScore: 0,
         reasons: [reason],
         winStreak: 0,
         loseStreak: 0,
         isOneTrickPony: false,
-        recentWinrate: 0
+        recentWinrate: 0,
+        summaryHeadline: '🔒 ' + reason
       }
     };
   }
 }
 
 export const inspectorService = new InspectorService();
+

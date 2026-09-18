@@ -271,7 +271,7 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
               <span
                 style={{
                   fontSize: '11px',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -282,13 +282,13 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
                   border: '1px solid rgba(239, 68, 68, 0.3)'
                 }}
               >
-                <Flame size={12} /> {smurf.winStreak >= 4 ? `🔥 ${smurf.winStreak} WINS` : t.threatHigh}
+                <Flame size={12} /> {isRu ? `СМУРФ ${smurf.smurfChancePercent}%` : `SMURF ${smurf.smurfChancePercent}%`}
               </span>
             ) : isMedThreat ? (
               <span
                 style={{
                   fontSize: '11px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -299,7 +299,7 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
                   border: '1px solid rgba(245, 158, 11, 0.3)'
                 }}
               >
-                <ShieldAlert size={12} /> {t.threatMed}
+                <ShieldAlert size={12} /> {isRu ? `ОПАСНОСТЬ ${smurf.smurfChancePercent}%` : `THREAT ${smurf.smurfChancePercent}%`}
               </span>
             ) : (
               <span
@@ -309,14 +309,14 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
                   padding: '3px 8px'
                 }}
               >
-                {p.totalGames > 0 ? `${p.overallWinrate}% WR (${p.totalGames} ${t.gamesUnit})` : ''}
+                {p.totalGames > 0 ? `${p.overallWinrate}% WR` : ''}
               </span>
             )}
           </div>
         </div>
 
         {/* Smurf Reasons Alert Pill if suspect */}
-        {smurf.reasons.length > 0 && !p.isPrivate && (
+        {!p.isPrivate && (smurf.summaryHeadline || smurf.reasons.length > 0) && (
           <div
             style={{
               fontSize: '11px',
@@ -331,7 +331,7 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
           >
             <ShieldAlert size={12} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {smurf.reasons[0]}
+              {smurf.summaryHeadline || smurf.reasons[0]}
             </span>
           </div>
         )}
@@ -670,6 +670,26 @@ export const InspectorPage: React.FC<InspectorPageProps> = ({ language }) => {
               </div>
               <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
                 {p.rankName || t.uncalibrated}
+              </div>
+            </div>
+
+            <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>{isRu ? 'Рейтинг WR' : 'Ranked WR'}</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: p.rankedWinrate && p.rankedWinrate >= 55 ? '#10B981' : 'var(--text-primary)', marginTop: '2px' }}>
+                {p.rankedWinrate ? `${p.rankedWinrate}%` : '-'}
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                {p.rankedGames ? `${p.rankedGames} ${t.gamesUnit}` : (isRu ? 'Нет рейтинговых игр' : 'No ranked games')}
+              </div>
+            </div>
+
+            <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>{isRu ? 'Турбо WR' : 'Turbo WR'}</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: p.turboWinrate && p.turboWinrate >= 55 ? '#38BDF8' : 'var(--text-primary)', marginTop: '2px' }}>
+                {p.turboWinrate ? `${p.turboWinrate}%` : '-'}
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                {p.turboGames ? `${p.turboGames} ${t.gamesUnit}` : (isRu ? 'Нет турбо игр' : 'No turbo games')}
               </div>
             </div>
 

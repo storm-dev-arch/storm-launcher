@@ -196,6 +196,7 @@ export interface PlayerRecentMatch {
 
 export interface SmurfThreatAnalysis {
   isSmurfSuspect: boolean;
+  smurfChancePercent: number; // 0 - 100%
   threatLevel: 'low' | 'medium' | 'high';
   confidenceScore: number; // 0 - 100
   reasons: string[];
@@ -204,6 +205,11 @@ export interface SmurfThreatAnalysis {
   isOneTrickPony: boolean;
   signatureHeroAlert?: string;
   recentWinrate: number; // last 20 games winrate %
+  rankedWinrate?: number;
+  rankedGames?: number;
+  turboWinrate?: number;
+  turboGames?: number;
+  summaryHeadline?: string;
 }
 
 export interface PlayerDossier {
@@ -223,6 +229,10 @@ export interface PlayerDossier {
   losses: number;
   totalGames: number;
   overallWinrate: number;
+  rankedWinrate?: number;
+  rankedGames?: number;
+  turboWinrate?: number;
+  turboGames?: number;
   topHeroes: PlayerHeroStats[];
   recentMatches: PlayerRecentMatch[];
   smurfAnalysis: SmurfThreatAnalysis;

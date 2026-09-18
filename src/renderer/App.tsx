@@ -10,6 +10,7 @@ import { ScanGamesModal } from './components/ScanGamesModal';
 import { WhatShouldIPlayModal } from './components/WhatShouldIPlayModal';
 import { BackgroundShader } from './components/BackgroundShader';
 import { SteamGridModal } from './components/SteamGridModal';
+import { EnemyScoutModal } from './components/EnemyScoutModal';
 import { soundEngine } from './audio/soundEngine';
 import { translations, Language } from './i18n/translations';
 
@@ -65,6 +66,7 @@ export const App: React.FC = () => {
   const [steamGridGame, setSteamGridGame] = useState<Game | null>(null);
   const [activeGame, setActiveGame] = useState<ActiveGameInfo | null>(null);
   const [liveGsiStats, setLiveGsiStats] = useState<LiveGameStats | null>(null);
+  const [isScoutModalOpen, setIsScoutModalOpen] = useState(false);
 
   const activeGameData = React.useMemo(() => {
     if (!activeGame) return null;
@@ -237,6 +239,9 @@ export const App: React.FC = () => {
 
     const unsubGSI = window.stormPlay.events.onGSIUpdate((stats) => {
       setLiveGsiStats(stats);
+      if (stats?.gameState === 'DOTA_GAMERULES_STATE_HERO_SELECTION' || stats?.gameState === 'DOTA_GAMERULES_STATE_STRATEGY_TIME') {
+        setIsScoutModalOpen(true);
+      }
     });
 
     return () => {
@@ -535,6 +540,7 @@ export const App: React.FC = () => {
         onOpenCommandPalette={() => setIsCmdOpen(true)}
         onOpenMiniMode={() => window.stormPlay.system.toggleMiniMode()}
         onScanSteam={handleScanSteam}
+        onOpenScout={() => setIsScoutModalOpen(true)}
         gameCount={games.length}
         language={language}
         onToggleLanguage={handleToggleLanguage}
@@ -602,6 +608,7 @@ export const App: React.FC = () => {
                   onToggleFavorite={handleToggleFavorite}
                   onContextMenu={handleContextMenu}
                   onNavigate={(page) => setActivePage(page)}
+                  onOpenScout={() => setIsScoutModalOpen(true)}
                   language={language}
                   activeGame={activeGame}
                   gsiStats={liveGsiStats}
@@ -740,6 +747,12 @@ export const App: React.FC = () => {
           language={language}
         />
       )}
+
+      <EnemyScoutModal
+        isOpen={isScoutModalOpen}
+        onClose={() => setIsScoutModalOpen(false)}
+        language={language}
+      />
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>

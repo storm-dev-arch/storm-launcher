@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Minus, Square, X, Search, RefreshCw, Zap, Gamepad2, Minimize2, Globe } from 'lucide-react';
+import { Minus, Square, X, Search, RefreshCw, Zap, Gamepad2, Minimize2, Globe, Crosshair } from 'lucide-react';
 import type { ScannerProgress } from '../../shared/types';
 import { translations, Language } from '../i18n/translations';
 
@@ -9,6 +9,7 @@ interface TitleBarProps {
   onOpenCommandPalette: () => void;
   onOpenMiniMode: () => void;
   onScanSteam: () => void;
+  onOpenScout?: () => void;
   gameCount: number;
   language: Language;
   onToggleLanguage: () => void;
@@ -20,6 +21,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onOpenCommandPalette,
   onOpenMiniMode,
   onScanSteam,
+  onOpenScout,
   gameCount,
   language,
   onToggleLanguage
@@ -204,6 +206,30 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           <RefreshCw size={12} className={isScanning ? 'spin' : ''} style={{ color: 'var(--text-primary)' }} />
           <span key={`tb-scan-${language}`} className="lang-text-anim">{t.scan}</span>
         </button>
+
+        {onOpenScout && (
+          <button
+            onClick={onOpenScout}
+            className="interactive-press"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              borderRadius: '20px',
+              padding: '5px 12px',
+              color: '#EF4444',
+              fontSize: '11.5px',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+            title={language === 'ru' ? 'Разведка противников и смурфов' : 'Scout opponents & smurfs'}
+          >
+            <Crosshair size={12} />
+            <span>{language === 'ru' ? 'Разведка' : 'Scout'}</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenMiniMode}

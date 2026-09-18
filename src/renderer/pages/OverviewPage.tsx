@@ -14,6 +14,7 @@ interface OverviewPageProps {
   onToggleFavorite: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, game: Game) => void;
   onNavigate: (page: PageId) => void;
+  onOpenScout?: () => void;
   language: Language;
   activeGame?: ActiveGameInfo | null;
   gsiStats?: LiveGameStats | null;
@@ -27,6 +28,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   onToggleFavorite,
   onContextMenu,
   onNavigate,
+  onOpenScout,
   language,
   activeGame,
   gsiStats,
@@ -344,35 +346,35 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
                 {(featuredGame.steamAppId === 570 || featuredGame.steamAppId === 730 || isPlaying) && (
                   <button
-                    onClick={() => onNavigate('inspector')}
+                    onClick={() => onOpenScout ? onOpenScout() : onNavigate('inspector')}
                     style={{
                       padding: '12px 20px',
                       borderRadius: '30px',
                       fontSize: '13px',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '7px',
-                      color: '#38BDF8',
-                      background: 'rgba(56, 189, 248, 0.1)',
-                      border: '1px solid rgba(56, 189, 248, 0.25)',
+                      color: '#EF4444',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
                       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
                       cursor: 'pointer',
                       transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)'
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)';
-                      e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
                       e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.25)';
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     <Crosshair size={15} />
-                    <span>{language === 'ru' ? 'Разведка лобби' : 'Lobby Inspector'}</span>
+                    <span>{language === 'ru' ? 'Разведка противников' : 'Enemy Scout'}</span>
                   </button>
                 )}
               </div>
