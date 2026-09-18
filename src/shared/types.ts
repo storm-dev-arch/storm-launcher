@@ -194,21 +194,43 @@ export interface PlayerRecentMatch {
   playedAt: number;
 }
 
+export interface ModeWinrateStats {
+  winrate: number | null; // null if games === 0 (insufficient data)
+  wins: number;
+  losses: number;
+  games: number;
+  formatted: string; // e.g. "70%" or "Недостаточно данных"
+  detailText: string; // e.g. "42W / 18L" or "0 матчей"
+}
+
+export interface DebugMatchInfo {
+  matchId: number | string;
+  gameMode: number;
+  lobbyType: number;
+  won: boolean;
+  startTime: number;
+  heroId: number;
+  heroName?: string;
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  source: string;
+}
+
+export type SmurfSuspicionLevel = 'high_smurf' | 'high_suspicion' | 'suspicious' | 'clean';
+
 export interface SmurfThreatAnalysis {
   isSmurfSuspect: boolean;
   smurfChancePercent: number; // 0 - 100%
+  suspicionLevel: SmurfSuspicionLevel;
   threatLevel: 'low' | 'medium' | 'high';
-  confidenceScore: number; // 0 - 100
+  confidenceScore: number; // 0 - 100%
   reasons: string[];
   winStreak: number;
   loseStreak: number;
   isOneTrickPony: boolean;
   signatureHeroAlert?: string;
   recentWinrate: number; // last 20 games winrate %
-  rankedWinrate?: number;
-  rankedGames?: number;
-  turboWinrate?: number;
-  turboGames?: number;
   summaryHeadline?: string;
 }
 
@@ -224,18 +246,19 @@ export interface PlayerDossier {
   rankStars?: number;
   rankBadgeUrl?: string;
   leaderboardRank?: number;
-  estimatedMmr?: number;
+  exactMmr?: number | null; // Authentic MMR if present, otherwise null
+  mmrDisplay: string; // "Недоступен публично" or exact number
   wins: number;
   losses: number;
   totalGames: number;
   overallWinrate: number;
-  rankedWinrate?: number;
-  rankedGames?: number;
-  turboWinrate?: number;
-  turboGames?: number;
+  rankedStats: ModeWinrateStats;
+  turboStats: ModeWinrateStats;
+  allPickStats: ModeWinrateStats;
   topHeroes: PlayerHeroStats[];
   recentMatches: PlayerRecentMatch[];
   smurfAnalysis: SmurfThreatAnalysis;
+  debugMatches?: DebugMatchInfo[];
   team?: 'radiant' | 'dire' | 'unassigned';
 }
 

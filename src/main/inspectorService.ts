@@ -5,7 +5,9 @@ import type {
   PlayerHeroStats,
   PlayerRecentMatch,
   SmurfThreatAnalysis,
-  LobbyRoster
+  LobbyRoster,
+  ModeWinrateStats,
+  DebugMatchInfo
 } from '../shared/types';
 import { db } from './db';
 
@@ -171,8 +173,9 @@ function httpsGetJson<T>(url: string, timeoutMs = 4500): Promise<T | null> {
     const req = https.get(
       url,
       {
+        family: 4, // CRITICAL: force IPv4 to prevent IPv6 timeout on Windows
         headers: {
-          'User-Agent': 'Storm-Launcher/1.3.0 (Windows)'
+          'User-Agent': 'Storm-Launcher/1.4.0 (Windows)'
         },
         timeout: timeoutMs
       },
@@ -347,6 +350,29 @@ export class InspectorService {
     return this.createFallbackDossier(0, trimmed, 'Игрок не найден');
   }
 
+  public buildModeStats(wins: number, losses: number, isRu: boolean): ModeWinrateStats {
+    const games = wins + losses;
+    if (games <= 0) {
+      return {
+        winrate: null,
+        wins: 0,
+        losses: 0,
+        games: 0,
+        formatted: isRu ? 'Недостаточно данных' : 'Insufficient data',
+        detailText: isRu ? '0 матчей' : '0 matches'
+      };
+    }
+    const wr = Math.round((wins / games) * 100);
+    return {
+      winrate: wr,
+      wins,
+      losses,
+      games,
+      formatted: `${wr}%`,
+      detailText: `${wins}W / ${losses}L`
+    };
+  }
+
   public async fetchPlayerDossier(accountId: number): Promise<PlayerDossier> {
     const cached = this.dossierCache.get(accountId);
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
@@ -356,14 +382,16 @@ export class InspectorService {
     const lang = (db.getSettings().language || 'ru') as 'ru' | 'en';
     const isRu = lang === 'ru';
 
-    // Parallel fetch with graceful failure handling
-    const [profileData, wlData, rankedWlData, turboWlData, heroesData, recentMatchesData] = await Promise.all([
+    // Parallel fetch: OpenDota player info, total WL, mode WLs, heroes, and recent matches
+    const [profileData, wlData, rankedWlData, turboWlData, ap1WlData, ap22WlData, heroesData, matchesData] = await Promise.all([
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}`),
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl`),
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?lobby_type=7`),
       httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?game_mode=23`),
+      httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?game_mode=1`),
+      httpsGetJson<any>(`https://api.opendota.com/api/players/${accountId}/wl?game_mode=22`),
       httpsGetJson<any[]>(`https://api.opendota.com/api/players/${accountId}/heroes`),
-      httpsGetJson<any[]>(`https://api.opendota.com/api/players/${accountId}/recentMatches`)
+      httpsGetJson<any[]>(`https://api.opendota.com/api/players/${accountId}/matches?limit=30`)
     ]);
 
     const profile = profileData?.profile || {};
@@ -377,46 +405,65 @@ export class InspectorService {
 
     let rankName: string | undefined = undefined;
     let rankStars: number | undefined = undefined;
-    let estimatedMmr: number | undefined = undefined;
 
     if (rankTier) {
       const tier = Math.floor(rankTier / 10);
       rankStars = rankTier % 10;
-      rankName = isRu ? (RANK_NAMES_RU[tier] || 'Ранг') : (RANK_NAMES[tier] || 'Rank');
-      if (tier >= 1 && tier <= 7) {
-        estimatedMmr = Math.max(0, (tier - 1) * 770 + rankStars * 154);
-      } else if (tier === 8) {
-        estimatedMmr = 5620 + (leaderboardRank ? Math.max(0, 5000 - leaderboardRank) : 500);
+      const baseName = isRu ? (RANK_NAMES_RU[tier] || 'Ранг') : (RANK_NAMES[tier] || 'Rank');
+      if (tier === 8) {
+        rankName = leaderboardRank ? `Immortal #${leaderboardRank}` : (isRu ? 'Титан' : 'Immortal');
+      } else {
+        rankName = `${baseName} ${rankStars > 0 ? rankStars : ''}`.trim();
       }
     }
 
+    // Authentic MMR: only use verified public competitive_rank, NEVER fabricate from medals!
+    let exactMmr: number | null = null;
+    if (typeof profileData?.profile?.competitive_rank === 'number' && profileData.profile.competitive_rank > 0) {
+      exactMmr = profileData.profile.competitive_rank;
+    } else if (typeof profileData?.solo_competitive_rank === 'number' && profileData.solo_competitive_rank > 0) {
+      exactMmr = profileData.solo_competitive_rank;
+    }
+    const mmrDisplay = exactMmr !== null ? `${exactMmr}` : (isRu ? 'Недоступен публично' : 'Publicly unavailable');
+
+    // Total games and winrate
     const wins = wlData?.win ?? 0;
     const losses = wlData?.lose ?? 0;
     const totalGames = wins + losses;
     const overallWinrate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
 
+    // Distinct mode-specific calculations
     const rankedWins = rankedWlData?.win ?? 0;
     const rankedLosses = rankedWlData?.lose ?? 0;
-    const rankedGames = rankedWins + rankedLosses;
-    const rankedWinrate = rankedGames > 0 ? Math.round((rankedWins / rankedGames) * 100) : undefined;
+    const rankedStats = this.buildModeStats(rankedWins, rankedLosses, isRu);
 
     const turboWins = turboWlData?.win ?? 0;
     const turboLosses = turboWlData?.lose ?? 0;
-    const turboGames = turboWins + turboLosses;
-    const turboWinrate = turboGames > 0 ? Math.round((turboWins / turboGames) * 100) : undefined;
+    const turboStats = this.buildModeStats(turboWins, turboLosses, isRu);
 
-    // Check if profile is private (Dota match history hidden in game settings)
-    const isPrivate = totalGames === 0 && (!recentMatchesData || recentMatchesData.length === 0);
+    // All Pick combines classic All Pick (game_mode=1) and Ranked All Pick (game_mode=22)
+    const apWins = (ap1WlData?.win ?? 0) + (ap22WlData?.win ?? 0);
+    const apLosses = (ap1WlData?.lose ?? 0) + (ap22WlData?.lose ?? 0);
+    const allPickStats = this.buildModeStats(apWins, apLosses, isRu);
 
-    // Process top signature heroes
+    // Check if profile is completely private in Dota 2 settings
+    const isPrivate = totalGames === 0 && (!matchesData || matchesData.length === 0);
+
+    // Top Signature heroes (3 - 5 heroes max, strictly filter out heroes with < 5 games)
     const topHeroes: PlayerHeroStats[] = [];
     if (Array.isArray(heroesData)) {
-      const playedHeroes = heroesData.filter(h => h.games > 0);
-      playedHeroes.sort((a, b) => b.games - a.games);
+      const minGames = totalGames < 50 ? 3 : 5;
+      const candidates = heroesData.filter(h => h.games >= minGames);
 
-      for (const h of playedHeroes.slice(0, 10)) {
+      candidates.sort((a, b) => {
+        const scoreA = (a.win / a.games) * 60 + Math.min(40, a.games);
+        const scoreB = (b.win / b.games) * 60 + Math.min(40, b.games);
+        return scoreB - scoreA;
+      });
+
+      for (const h of candidates.slice(0, 4)) {
         const info = this.getHeroInfo(h.hero_id);
-        const heroWr = h.games > 0 ? Math.round((h.win / h.games) * 100) : 0;
+        const heroWr = Math.round((h.win / h.games) * 100);
         topHeroes.push({
           heroId: h.hero_id,
           heroName: isRu ? info.localized : info.name,
@@ -428,10 +475,12 @@ export class InspectorService {
       }
     }
 
-    // Process recent 20 matches
+    // Process recent matches and debug info
     const recentMatches: PlayerRecentMatch[] = [];
-    if (Array.isArray(recentMatchesData)) {
-      for (const m of recentMatchesData.slice(0, 20)) {
+    const debugMatches: DebugMatchInfo[] = [];
+
+    if (Array.isArray(matchesData)) {
+      for (const m of matchesData.slice(0, 20)) {
         const info = this.getHeroInfo(m.hero_id);
         const won = (m.player_slot < 128 && m.radiant_win) || (m.player_slot >= 128 && !m.radiant_win);
         const k = m.kills ?? 0;
@@ -452,18 +501,31 @@ export class InspectorService {
           durationSeconds: m.duration ?? 0,
           playedAt: (m.start_time ?? 0) * 1000
         });
+
+        debugMatches.push({
+          matchId: m.match_id,
+          gameMode: m.game_mode ?? 0,
+          lobbyType: m.lobby_type ?? 0,
+          won,
+          startTime: (m.start_time ?? 0) * 1000,
+          heroId: m.hero_id,
+          heroName: isRu ? info.localized : info.name,
+          kills: k,
+          deaths: d,
+          assists: a,
+          source: 'OpenDota API'
+        });
       }
     }
 
-    // Calculate Smurf & Threat Analysis
+    // Multi-factor smurf & threat analysis
     const smurfAnalysis = this.analyzeThreat(
       accountId,
       totalGames,
       overallWinrate,
-      rankedWinrate,
-      rankedGames,
-      turboWinrate,
-      turboGames,
+      rankedStats,
+      turboStats,
+      allPickStats,
       rankTier,
       leaderboardRank,
       topHeroes,
@@ -483,17 +545,18 @@ export class InspectorService {
       rankName,
       rankStars,
       leaderboardRank,
-      estimatedMmr,
+      exactMmr,
+      mmrDisplay,
       wins,
       losses,
       totalGames,
       overallWinrate,
-      rankedWinrate,
-      rankedGames,
-      turboWinrate,
-      turboGames,
+      rankedStats,
+      turboStats,
+      allPickStats,
       topHeroes,
       recentMatches,
+      debugMatches,
       smurfAnalysis
     };
 
@@ -504,11 +567,10 @@ export class InspectorService {
   private analyzeThreat(
     _accountId: number,
     totalGames: number,
-    overallWinrate: number,
-    rankedWinrate: number | undefined,
-    rankedGames: number | undefined,
-    turboWinrate: number | undefined,
-    turboGames: number | undefined,
+    _overallWinrate: number,
+    rankedStats: ModeWinrateStats,
+    turboStats: ModeWinrateStats,
+    allPickStats: ModeWinrateStats,
     rankTier: number | undefined,
     _leaderboardRank: number | undefined,
     topHeroes: PlayerHeroStats[],
@@ -520,6 +582,7 @@ export class InspectorService {
       return {
         isSmurfSuspect: false,
         smurfChancePercent: 0,
+        suspicionLevel: 'clean',
         threatLevel: 'low',
         confidenceScore: 0,
         reasons: [isRu ? 'Профиль закрыт в настройках Dota 2' : 'Profile is private in Dota 2 settings'],
@@ -532,9 +595,9 @@ export class InspectorService {
     }
 
     const reasons: string[] = [];
-    let smurfScore = 5; // Base probability 5%
+    let score = 0;
 
-    // Calculate streaks from recent matches (index 0 is most recent)
+    // Calculate streaks
     let winStreak = 0;
     let loseStreak = 0;
     let countingWin = true;
@@ -559,17 +622,17 @@ export class InspectorService {
     const recentWins = recentMatches.filter(m => m.won).length;
     const recentWinrate = recentMatches.length > 0 ? Math.round((recentWins / recentMatches.length) * 100) : 0;
 
-    // Rule 1: High rank with very few games (smurf / booster)
+    // Factor 1: Account age / total games vs rank
     const tier = rankTier ? Math.floor(rankTier / 10) : 0;
-    if (totalGames > 0 && totalGames < 500 && tier >= 6) { // Ancient+ under 500 games
-      smurfScore += 50;
+    if (totalGames > 0 && totalGames < 450 && tier >= 6) { // Ancient+ under 450 games
+      score += 45;
       reasons.push(
         isRu
           ? `Мало игр (${totalGames}) при высоком ранге`
           : `Few games (${totalGames}) for high rank`
       );
-    } else if (totalGames > 0 && totalGames < 350 && tier >= 4) { // Archon+ under 350 games
-      smurfScore += 30;
+    } else if (totalGames > 0 && totalGames < 250 && tier >= 4) { // Archon+ under 250 games
+      score += 25;
       reasons.push(
         isRu
           ? `Свежий аккаунт: всего ${totalGames} матчей`
@@ -577,49 +640,71 @@ export class InspectorService {
       );
     }
 
-    // Rule 2: Ranked winrate
-    if (rankedWinrate !== undefined && (rankedGames || 0) >= 15) {
-      if (rankedWinrate >= 68) {
-        smurfScore += 30;
+    // Factor 2: Ranked winrate
+    if (rankedStats.winrate !== null && rankedStats.games >= 15) {
+      if (rankedStats.winrate >= 68) {
+        score += 35;
         reasons.push(
           isRu
-            ? `Высокий винрейт в рейтинге: ${rankedWinrate}% (${rankedGames} игр)`
-            : `High ranked winrate: ${rankedWinrate}% (${rankedGames} games)`
+            ? `Высокий Ranked WR: ${rankedStats.formatted} (${rankedStats.detailText})`
+            : `High Ranked WR: ${rankedStats.formatted} (${rankedStats.detailText})`
         );
-      } else if (rankedWinrate >= 60) {
-        smurfScore += 15;
+      } else if (rankedStats.winrate >= 60) {
+        score += 15;
       }
     }
 
-    // Rule 3: Turbo winrate
-    if (turboWinrate !== undefined && (turboGames || 0) >= 15) {
-      if (turboWinrate >= 65) {
-        smurfScore += 25;
+    // Factor 3: Turbo winrate
+    if (turboStats.winrate !== null && turboStats.games >= 15) {
+      if (turboStats.winrate >= 65) {
+        score += 25;
         reasons.push(
           isRu
-            ? `Высокий турбо винрейт: ${turboWinrate}% (${turboGames} игр)`
-            : `High turbo winrate: ${turboWinrate}% (${turboGames} games)`
+            ? `Сильная статистика в Turbo: ${turboStats.formatted} (${turboStats.detailText})`
+            : `High Turbo WR: ${turboStats.formatted} (${turboStats.detailText})`
         );
-      } else if (turboWinrate >= 60) {
-        smurfScore += 10;
+      } else if (turboStats.winrate >= 60) {
+        score += 10;
       }
     }
 
-    // Rule 4: High overall winrate
-    if (totalGames >= 30 && overallWinrate >= 64) {
-      smurfScore += 20;
+    // Factor 4: All Pick winrate
+    if (allPickStats.winrate !== null && allPickStats.games >= 20) {
+      if (allPickStats.winrate >= 66) {
+        score += 20;
+        reasons.push(
+          isRu
+            ? `Высокий All Pick WR: ${allPickStats.formatted} (${allPickStats.detailText})`
+            : `High All Pick WR: ${allPickStats.formatted} (${allPickStats.detailText})`
+        );
+      }
     }
 
-    // Rule 5: Recent winstreak or dominant form
+    // Factor 5: Signature hero dominance
+    let isOneTrickPony = false;
+    let signatureHeroAlert: string | undefined = undefined;
+    if (topHeroes.length > 0) {
+      const best = topHeroes[0];
+      if (best.games >= 15 && best.winrate >= 68) {
+        isOneTrickPony = true;
+        score += 20;
+        signatureHeroAlert = isRu
+          ? `Сигнатурка: ${best.heroName} (${best.games} игр · ${best.winrate}% WR)`
+          : `Signature: ${best.heroName} (${best.games} games · ${best.winrate}% WR)`;
+        reasons.push(signatureHeroAlert);
+      }
+    }
+
+    // Factor 6: Hot form / winstreak
     if (winStreak >= 4) {
-      smurfScore += Math.min(25, winStreak * 5);
+      score += Math.min(20, winStreak * 4);
       reasons.push(
         isRu
-          ? `🔥 Винстрик: ${winStreak} побед подряд!`
-          : `🔥 Win streak: ${winStreak} wins in a row!`
+          ? `🔥 Винстрик: ${winStreak} побед подряд`
+          : `🔥 Win streak: ${winStreak} wins in a row`
       );
     } else if (recentMatches.length >= 10 && recentWinrate >= 75) {
-      smurfScore += 15;
+      score += 15;
       reasons.push(
         isRu
           ? `⚡ Горячая форма: ${recentWinrate}% за последние 20 игр`
@@ -627,84 +712,70 @@ export class InspectorService {
       );
     }
 
-    // Rule 6: Losestreak / tilt warning
+    // Factor 7: Lose streak warning
     if (loseStreak >= 4) {
       reasons.push(
         isRu
           ? `❄️ Лузстрик: ${loseStreak} поражений подряд (тильт)`
-          : `❄️ Lose streak: ${loseStreak} losses in a row (tilt)`
+          : `❄️ Lose streak: ${loseStreak} losses (tilt)`
       );
     }
 
-    // Rule 7: Signature Hero One-Trick-Pony (OTP)
-    let isOneTrickPony = false;
-    let signatureHeroAlert: string | undefined = undefined;
-
-    if (topHeroes.length > 0) {
-      const best = topHeroes[0];
-      if (best.games >= 30 && best.winrate >= 62) {
-        isOneTrickPony = true;
-        smurfScore += 15;
-        signatureHeroAlert = isRu
-          ? `Сигнатурка: ${best.heroName} (${best.games} игр, ${best.winrate}% WR)`
-          : `Signature: ${best.heroName} (${best.games} games, ${best.winrate}% WR)`;
-        reasons.push(signatureHeroAlert);
-      }
-    }
-
-    const smurfChancePercent = Math.min(98, Math.max(5, smurfScore));
-    const isSmurfSuspect = smurfChancePercent >= 50;
-
+    // Determine Suspicion Level (4 strict tiers)
+    let suspicionLevel: 'high_smurf' | 'high_suspicion' | 'suspicious' | 'clean' = 'clean';
     let threatLevel: 'low' | 'medium' | 'high' = 'low';
-    if (smurfChancePercent >= 65 || winStreak >= 5) {
+
+    if (score >= 60) {
+      suspicionLevel = 'high_smurf';
       threatLevel = 'high';
-    } else if (smurfChancePercent >= 35 || winStreak >= 3 || recentWinrate >= 65) {
+    } else if (score >= 40) {
+      suspicionLevel = 'high_suspicion';
+      threatLevel = 'high';
+    } else if (score >= 20) {
+      suspicionLevel = 'suspicious';
       threatLevel = 'medium';
-    }
-
-    // Confidence score based on available data
-    let confidenceScore = 30;
-    if (totalGames > 100) confidenceScore = 60;
-    if (totalGames > 500) confidenceScore = 85;
-    if (totalGames > 1500) confidenceScore = 95;
-
-    // Summary Headline for glanceable HUD
-    const topHero = topHeroes[0];
-    const topHeroStr = topHero ? `${topHero.heroName} (${topHero.winrate}% WR)` : '';
-    const turboStr = turboWinrate ? `${isRu ? 'Турбо' : 'Turbo'} ${turboWinrate}% WR` : '';
-    const rankedStr = rankedWinrate ? `${isRu ? 'Рейтинг' : 'Ranked'} ${rankedWinrate}% WR` : '';
-    const wrParts = [rankedStr, turboStr].filter(Boolean).join(' • ');
-
-    let summaryHeadline = '';
-    if (isSmurfSuspect) {
-      summaryHeadline = isRu
-        ? `🚨 Высокий шанс смурфа (${smurfChancePercent}%)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • Сигнатурка: ${topHeroStr}` : ''}`
-        : `🚨 High smurf chance (${smurfChancePercent}%)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • Signature: ${topHeroStr}` : ''}`;
-    } else if (threatLevel === 'medium') {
-      summaryHeadline = isRu
-        ? `⚠️ Опасный игрок (${smurfChancePercent}% смурф)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • ${topHeroStr}` : ''}`
-        : `⚠️ Threat player (${smurfChancePercent}% smurf)${wrParts ? ` • ${wrParts}` : ''}${topHeroStr ? ` • ${topHeroStr}` : ''}`;
     } else {
-      summaryHeadline = isRu
-        ? `Обычный игрок (${smurfChancePercent}% смурф)${wrParts ? ` • ${wrParts}` : ` • ${overallWinrate}% WR`}${topHeroStr ? ` • ${topHeroStr}` : ''}`
-        : `Normal player (${smurfChancePercent}% smurf)${wrParts ? ` • ${wrParts}` : ` • ${overallWinrate}% WR`}${topHeroStr ? ` • ${topHeroStr}` : ''}`;
+      suspicionLevel = 'clean';
+      threatLevel = 'low';
     }
+
+    const smurfChancePercent = Math.min(96, Math.max(5, score));
+    const isSmurfSuspect = suspicionLevel === 'high_smurf' || suspicionLevel === 'high_suspicion';
+
+    // Confidence score based on total games volume
+    let confidenceScore = 35;
+    if (totalGames >= 1500) confidenceScore = 92;
+    else if (totalGames >= 500) confidenceScore = 85;
+    else if (totalGames >= 150) confidenceScore = 75;
+    else if (totalGames >= 30) confidenceScore = 60;
+
+    // Headline
+    let summaryHeadline = '';
+    if (suspicionLevel === 'high_smurf') {
+      summaryHeadline = isRu ? '🔴 ВЫСОКИЙ ШАНС НА СМУРФ' : '🔴 HIGH SMURF CHANCE';
+    } else if (suspicionLevel === 'high_suspicion') {
+      summaryHeadline = isRu ? '🟠 ПОВЫШЕННОЕ ПОДОЗРЕНИЕ' : '🟠 ELEVATED SUSPICION';
+    } else if (suspicionLevel === 'suspicious') {
+      summaryHeadline = isRu ? '🟡 ЕСТЬ ПОДОЗРИТЕЛЬНЫЕ ПРИЗНАКИ' : '🟡 SUSPICIOUS SIGNS';
+    } else {
+      summaryHeadline = isRu ? '🟢 ПОДОЗРИТЕЛЬНЫХ ПРИЗНАКОВ НЕ НАЙДЕНО' : '🟢 CLEAN ACCOUNT';
+    }
+
+    // Keep only top 2-4 most critical reasons
+    const cleanReasons = reasons.slice(0, 4);
 
     return {
       isSmurfSuspect,
       smurfChancePercent,
+      suspicionLevel,
       threatLevel,
       confidenceScore,
-      reasons,
+      reasons: cleanReasons,
       winStreak,
       loseStreak,
       isOneTrickPony,
       signatureHeroAlert,
       recentWinrate,
-      rankedWinrate,
-      rankedGames,
-      turboWinrate,
-      turboGames,
       summaryHeadline
     };
   }
@@ -760,21 +831,29 @@ export class InspectorService {
   }
 
   private createFallbackDossier(accountId: number, name: string, reason: string): PlayerDossier {
+    const isRu = (db.getSettings().language || 'ru') === 'ru';
+    const emptyStats = this.buildModeStats(0, 0, isRu);
     return {
       accountId,
       name,
       avatar: 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg',
       profileUrl: accountId > 0 ? `https://steamcommunity.com/profiles/${BigInt(accountId) + 76561197960265728n}` : '',
       isPrivate: true,
+      exactMmr: null,
+      mmrDisplay: isRu ? 'Недоступен публично' : 'Publicly unavailable',
       wins: 0,
       losses: 0,
       totalGames: 0,
       overallWinrate: 0,
+      rankedStats: emptyStats,
+      turboStats: emptyStats,
+      allPickStats: emptyStats,
       topHeroes: [],
       recentMatches: [],
       smurfAnalysis: {
         isSmurfSuspect: false,
         smurfChancePercent: 0,
+        suspicionLevel: 'clean',
         threatLevel: 'low',
         confidenceScore: 0,
         reasons: [reason],

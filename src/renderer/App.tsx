@@ -10,7 +10,7 @@ import { ScanGamesModal } from './components/ScanGamesModal';
 import { WhatShouldIPlayModal } from './components/WhatShouldIPlayModal';
 import { BackgroundShader } from './components/BackgroundShader';
 import { SteamGridModal } from './components/SteamGridModal';
-import { EnemyScoutModal } from './components/EnemyScoutModal';
+import { LobbyScoutModal } from './components/LobbyScoutModal';
 import { soundEngine } from './audio/soundEngine';
 import { translations, Language } from './i18n/translations';
 
@@ -20,7 +20,6 @@ const LibraryPage = React.lazy(() => import('./pages/LibraryPage').then(m => ({ 
 const GameDetailPage = React.lazy(() => import('./pages/GameDetailPage').then(m => ({ default: m.GameDetailPage })));
 const CollectionsPage = React.lazy(() => import('./pages/CollectionsPage').then(m => ({ default: m.CollectionsPage })));
 const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage').then(m => ({ default: m.StatisticsPage })));
-const InspectorPage = React.lazy(() => import('./pages/InspectorPage').then(m => ({ default: m.InspectorPage })));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 import { OnboardingModal } from './pages/OnboardingModal';
 
@@ -639,8 +638,6 @@ export const App: React.FC = () => {
                 />
               ) : activePage === 'statistics' ? (
                 <StatisticsPage language={language} />
-              ) : activePage === 'inspector' ? (
-                <InspectorPage language={language} />
               ) : activePage === 'settings' ? (
                 <SettingsPage
                   onScanSteam={handleScanSteam}
@@ -748,7 +745,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      <EnemyScoutModal
+      <LobbyScoutModal
         isOpen={isScoutModalOpen}
         onClose={() => setIsScoutModalOpen(false)}
         language={language}
