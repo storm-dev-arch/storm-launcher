@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Minus, Square, X, Search, RefreshCw, Zap, Gamepad2, Minimize2, Globe } from 'lucide-react';
-import type { ScannerProgress, ActiveGameInfo, LiveGameStats, Game } from '../../shared/types';
+import type { ScannerProgress } from '../../shared/types';
 import { translations, Language } from '../i18n/translations';
-import { NowPlayingWidget } from './NowPlayingWidget';
 
 interface TitleBarProps {
   steamStatus: { installed: boolean; libraries: string[] };
@@ -13,10 +12,6 @@ interface TitleBarProps {
   gameCount: number;
   language: Language;
   onToggleLanguage: () => void;
-  activeGame?: ActiveGameInfo | null;
-  gsiStats?: LiveGameStats | null;
-  activeGameData?: Game | null;
-  onOpenDetails?: (game: Game) => void;
 }
 
 export const TitleBar: React.FC<TitleBarProps> = ({
@@ -27,11 +22,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onScanSteam,
   gameCount,
   language,
-  onToggleLanguage,
-  activeGame,
-  gsiStats,
-  activeGameData,
-  onOpenDetails
+  onToggleLanguage
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [langAnim, setLangAnim] = useState(false);
@@ -127,17 +118,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             {steamStatus.installed ? t.steamConnected : t.steamNotFound}
           </span>
         </div>
-
-        {(activeGame || gsiStats) && (
-          <NowPlayingWidget
-            variant="badge"
-            activeGame={activeGame || null}
-            gsiStats={gsiStats || null}
-            gameData={activeGameData}
-            language={language}
-            onOpenDetails={onOpenDetails}
-          />
-        )}
       </div>
 
       {/* Center Dynamic Search Capsule */}

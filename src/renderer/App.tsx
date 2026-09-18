@@ -537,10 +537,6 @@ export const App: React.FC = () => {
         gameCount={games.length}
         language={language}
         onToggleLanguage={handleToggleLanguage}
-        activeGame={activeGame}
-        gsiStats={liveGsiStats}
-        activeGameData={activeGameData}
-        onOpenDetails={(game) => setSelectedGame(game)}
       />
 
       <div 

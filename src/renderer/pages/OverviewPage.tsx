@@ -4,7 +4,8 @@ import type { Game, ActiveGameInfo, LiveGameStats } from '../../shared/types';
 import type { PageId } from '../components/Sidebar';
 import { GameCard } from '../components/GameCard';
 import { translations, Language } from '../i18n/translations';
-import { NowPlayingWidget } from '../components/NowPlayingWidget';
+
+const DOTA2_ICON_URL = 'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/global/dota2_logo_symbol.png';
 
 interface OverviewPageProps {
   games: Game[];
@@ -33,8 +34,33 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 }) => {
   const t = translations[language].overview;
 
+  const isPlaying = Boolean(activeGame || gsiStats);
+  const isDota = activeGame?.name?.toLowerCase().includes('dota') || gsiStats?.game === 'dota2';
+  const isCS = activeGame?.name?.toLowerCase().includes('cs') || activeGame?.name?.toLowerCase().includes('counter-strike') || gsiStats?.game === 'cs2';
+
+  const runningGameFallback: Game | null = isPlaying ? {
+    id: activeGameData?.id || activeGame?.gameId || 'active-running-game',
+    source: activeGameData?.source || 'steam',
+    name: gsiStats?.title || activeGame?.name || 'Current Game',
+    installPath: activeGameData?.installPath || '',
+    installed: true,
+    favorite: activeGameData?.favorite || false,
+    playtimeMinutes: activeGameData?.playtimeMinutes || 0,
+    dateAdded: activeGameData?.dateAdded || Date.now(),
+    custom: activeGameData?.custom || false,
+    artwork: {
+      cover: activeGameData?.artwork?.cover || activeGame?.coverUrl || (isDota ? DOTA2_ICON_URL : undefined),
+      hero: activeGameData?.artwork?.hero || activeGameData?.artwork?.cover || activeGame?.coverUrl || (isDota ? DOTA2_ICON_URL : undefined),
+      icon: isDota ? DOTA2_ICON_URL : activeGameData?.artwork?.icon
+    },
+    collections: activeGameData?.collections || [],
+    launchCount: (activeGameData?.launchCount || 0) + 1,
+    totalSessionTimeMinutes: activeGameData?.totalSessionTimeMinutes || 0
+  } : null;
+
   const installedGames = games.filter(g => g.installed);
-  const featuredGame = installedGames.slice().sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0))[0] 
+  const featuredGame = (isPlaying ? (activeGameData || runningGameFallback) : null)
+    || installedGames.slice().sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0))[0] 
     || installedGames.slice().sort((a, b) => (b.playtimeMinutes || 0) - (a.playtimeMinutes || 0))[0]
     || games[0];
 
@@ -51,19 +77,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
   return (
     <div style={{ padding: '28px 36px', maxWidth: '1400px', margin: '0 auto' }}>
-      {(activeGame || gsiStats) && (
-        <div style={{ marginBottom: '28px' }}>
-          <NowPlayingWidget
-            variant="banner"
-            activeGame={activeGame || null}
-            gsiStats={gsiStats || null}
-            gameData={activeGameData}
-            language={language}
-            onOpenDetails={onOpenDetails}
-          />
-        </div>
-      )}
-
       {featuredGame && (
         <section
           style={{
@@ -138,21 +151,21 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: isPlaying ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+                    border: isPlaying ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.12)',
                     boxShadow: 'none',
                     padding: '4px 11px',
                     borderRadius: '16px',
-                    color: '#fff'
+                    color: isPlaying ? '#34d399' : '#fff'
                   }}
                 >
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-                  {t.continuePlaying}
+                  {isPlaying ? (language === 'ru' ? 'В игре' : 'Now Playing') : t.continuePlaying}
                 </span>
                 <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
                   {formatPlaytime(featuredGame.playtimeMinutes)}
                 </span>
-                {featuredGame.lastPlayed && (
+                {!isPlaying && featuredGame.lastPlayed && (
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     • {language === 'ru' ? 'Был запущен: ' : 'Last played: '}{new Date(featuredGame.lastPlayed).toLocaleDateString()}
                   </span>
@@ -174,38 +187,130 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 {featuredGame.name}
               </h1>
 
+              {isPlaying && gsiStats && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  {gsiStats.heroOrMap && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)'
+                    }}>
+                      {gsiStats.heroIcon && (
+                        <img src={gsiStats.heroIcon} alt="" style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'cover' }} />
+                      )}
+                      <span>{gsiStats.heroOrMap}</span>
+                      {gsiStats.level ? <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>({gsiStats.level} ур.)</span> : null}
+                    </div>
+                  )}
+
+                  {gsiStats.scoreOrKDA && (
+                    <div style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.04em',
+                      color: 'var(--text-primary)'
+                    }}>
+                      <span style={{ color: 'var(--text-muted)', marginRight: '6px', fontWeight: 500, fontSize: '11px', textTransform: 'uppercase' }}>
+                        {isCS ? 'Счёт' : 'KDA'}
+                      </span>
+                      {gsiStats.scoreOrKDA}
+                    </div>
+                  )}
+
+                  {gsiStats.matchTime && (
+                    <div style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#38bdf8'
+                    }}>
+                      ⏱ {gsiStats.matchTime}
+                    </div>
+                  )}
+
+                  {gsiStats.paused && (
+                    <div style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.25)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#fbbf24'
+                    }}>
+                      Пауза
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '20px' }}>
-                <button
-                  onClick={() => onPlay(featuredGame)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '9px',
-                    padding: '13px 28px',
-                    borderRadius: '30px',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    color: '#000000',
-                    background: '#FFFFFF',
-                    border: 'none',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
-                    cursor: 'pointer',
-                    transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = '#f4f4f5';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 22px rgba(0, 0, 0, 0.65)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = '#FFFFFF';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.5)';
-                  }}
-                >
-                  <Play size={18} fill="currentColor" />
-                  <span>{translations[language].gameCard.play}</span>
-                </button>
+                {isPlaying ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 24px',
+                      borderRadius: '30px',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      color: '#34d399',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)'
+                    }}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+                    <span>{language === 'ru' ? 'Игра запущена' : 'Game Running'}</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onPlay(featuredGame)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '9px',
+                      padding: '13px 28px',
+                      borderRadius: '30px',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      color: '#000000',
+                      background: '#FFFFFF',
+                      border: 'none',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
+                      cursor: 'pointer',
+                      transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#f4f4f5';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 22px rgba(0, 0, 0, 0.65)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = '#FFFFFF';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.5)';
+                    }}
+                  >
+                    <Play size={18} fill="currentColor" />
+                    <span>{translations[language].gameCard.play}</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => onOpenDetails(featuredGame)}

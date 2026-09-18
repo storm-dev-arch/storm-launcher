@@ -266,7 +266,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {(activeGame || gsiStats) && (
           <div style={{ marginBottom: '12px' }}>
             <NowPlayingWidget
-              variant="sidebar"
               activeGame={activeGame || null}
               gsiStats={gsiStats || null}
               gameData={activeGameData}
@@ -328,7 +327,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <span style={{ fontWeight: 600 }}>STORM LAUNCHER</span>
-          <span style={{ padding: '1px 6px', borderRadius: '6px', background: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>v1.2.2</span>
+          <span style={{ padding: '1px 6px', borderRadius: '6px', background: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>v1.2.3</span>
         </div>
       </div>
     </aside>
