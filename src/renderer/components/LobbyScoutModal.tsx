@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   AlertTriangle,
-  CheckCircle,
+  CheckCircle2,
   Copy,
   Check,
   ChevronLeft,
@@ -10,7 +10,7 @@ import {
   Clipboard,
   Bug,
   Shield,
-  Zap,
+  Crosshair,
   ExternalLink
 } from 'lucide-react';
 import type { PlayerDossier, LobbyRoster } from '../../shared/types';
@@ -112,35 +112,34 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.80)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        padding: '16px',
-        animation: 'fadeIn 180ms ease'
+        padding: '16px'
       }}
       onClick={onClose}
     >
       <div
+        className="fade-in"
         style={{
-          width: '580px',
-          maxWidth: '94vw',
+          width: '560px',
+          maxWidth: '92vw',
           maxHeight: '88vh',
-          background: 'rgba(13, 15, 23, 0.97)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '20px',
-          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 1px 1px rgba(255, 255, 255, 0.08)',
+          background: 'var(--bg-modal, rgba(12, 12, 16, 0.96))',
+          backdropFilter: 'blur(var(--glass-blur, 24px))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur, 24px))',
+          border: '1px solid var(--border-highlight, rgba(255, 255, 255, 0.16))',
+          borderRadius: '16px',
+          boxShadow: 'var(--shadow-glass, 0 24px 60px rgba(0, 0, 0, 0.75))',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          color: '#E2E8F0',
-          position: 'relative',
-          fontFamily: 'inherit'
+          color: 'var(--text-primary, #FFFFFF)',
+          position: 'relative'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -151,45 +150,45 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '14px 18px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.07)'
+            background: 'var(--bg-header, rgba(8, 8, 10, 0.65))',
+            borderBottom: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '8px',
-                background: 'rgba(245, 158, 11, 0.15)',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#F59E0B'
+                color: '#EF4444'
               }}
             >
-              <Zap size={16} />
+              <Crosshair size={15} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#fff' }}>
-                  {isRu ? 'Разведка лобби' : 'Lobby Scout'}
+                <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--text-primary, #fff)' }}>
+                  {isRu ? 'РАЗВЕДКА ЛОББИ' : 'LOBBY SCOUT'}
                 </span>
                 {loading && (
                   <span
                     style={{
-                      width: '8px',
-                      height: '8px',
+                      width: '7px',
+                      height: '7px',
                       borderRadius: '50%',
-                      background: '#38BDF8',
-                      boxShadow: '0 0 8px #38BDF8',
+                      background: '#EF4444',
+                      boxShadow: '0 0 8px #EF4444',
                       display: 'inline-block'
                     }}
                   />
                 )}
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted, #666)', marginTop: '1px' }}>
                 {loading
                   ? (isRu ? 'Анализируем противников...' : 'Analyzing opponents...')
                   : enemies.length > 0
@@ -204,34 +203,47 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
               onClick={handleParseClipboard}
               disabled={loading}
               title={isRu ? 'Вставить вывод status из буфера' : 'Paste status from clipboard'}
+              className="interactive-press"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '6px 12px',
-                borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#E2E8F0',
+                borderRadius: '20px',
+                background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                color: 'var(--text-secondary, #A0A0A0)',
                 fontSize: '11.5px',
                 fontWeight: 600,
                 cursor: loading ? 'wait' : 'pointer',
                 transition: 'all 160ms ease'
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-primary, #fff)';
+                e.currentTarget.style.borderColor = 'var(--border-highlight, rgba(255, 255, 255, 0.16))';
+                e.currentTarget.style.background = 'var(--bg-card-hover, rgba(22, 22, 28, 0.82))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-secondary, #A0A0A0)';
+                e.currentTarget.style.borderColor = 'var(--border-subtle, rgba(255, 255, 255, 0.08))';
+                e.currentTarget.style.background = 'var(--bg-surface, rgba(24, 24, 30, 0.5))';
+              }}
             >
-              <Clipboard size={13} style={{ color: '#38BDF8' }} />
+              <Clipboard size={12} />
               <span>{isRu ? 'Вставить status' : 'Paste status'}</span>
             </button>
 
             <button
               onClick={() => setDebugMode(!debugMode)}
               title={isRu ? 'Режим отладки (Debug Mode)' : 'Debug Mode'}
+              className="interactive-press"
               style={{
-                padding: '7px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '8px',
-                background: debugMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                border: `1px solid ${debugMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                color: debugMode ? '#38BDF8' : 'rgba(255, 255, 255, 0.6)',
+                background: debugMode ? 'rgba(255, 255, 255, 0.12)' : 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                border: `1px solid ${debugMode ? 'var(--border-highlight)' : 'var(--border-subtle)'}`,
+                color: debugMode ? '#fff' : 'var(--text-secondary, #A0A0A0)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -239,22 +251,32 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 transition: 'all 160ms ease'
               }}
             >
-              <Bug size={14} />
+              <Bug size={13} />
             </button>
 
             <button
               onClick={onClose}
+              className="interactive-press"
               style={{
-                padding: '7px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.6)',
+                background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                color: 'var(--text-secondary, #A0A0A0)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 160ms ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#E11D48';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--bg-surface, rgba(24, 24, 30, 0.5))';
+                e.currentTarget.style.color = 'var(--text-secondary, #A0A0A0)';
               }}
             >
               <X size={14} />
@@ -262,58 +284,81 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
           </div>
         </div>
 
-        {/* Body Container */}
+        {/* Content */}
         <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(88vh - 65px)' }}>
           {loading ? (
             /* Loading State */
-            <div style={{ padding: '40px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ padding: '44px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  border: '3px solid rgba(56, 189, 248, 0.2)',
-                  borderTopColor: '#38BDF8',
+                  width: '32px',
+                  height: '32px',
+                  border: '2.5px solid var(--border-subtle, rgba(255, 255, 255, 0.1))',
+                  borderTopColor: 'var(--text-primary, #fff)',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
-                  marginBottom: '12px'
+                  marginBottom: '14px'
                 }}
               />
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--text-primary, #fff)' }}>
                 {isRu ? 'Анализируем противников...' : 'Analyzing opponents...'}
               </div>
-              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
-                {isRu ? 'Сбор винрейтов Ranked, Turbo, All Pick и сигнатурок' : 'Fetching Ranked, Turbo, All Pick winrates & signatures'}
+              <div style={{ fontSize: '12px', color: 'var(--text-muted, #666)', marginTop: '4px' }}>
+                {isRu ? 'Сбор винрейтов Ranked, Turbo, All Pick и сигнатур' : 'Fetching Ranked, Turbo, All Pick winrates & signatures'}
               </div>
             </div>
           ) : enemies.length === 0 ? (
             /* Empty State */
             <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
-                <Shield size={26} />
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px',
+                  color: 'var(--text-muted, #666)'
+                }}
+              >
+                <Shield size={22} />
               </div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary, #fff)' }}>
                 {isRu ? 'Нет активных данных лобби' : 'No active lobby data'}
               </div>
-              <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', maxWidth: '380px', margin: '8px auto 18px auto', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary, #A0A0A0)', maxWidth: '380px', margin: '8px auto 20px auto', lineHeight: '1.5' }}>
                 {isRu
                   ? 'Запустите матч в Dota 2 (стадия пиков) или скопируйте в консоли команду status и нажмите кнопку ниже.'
                   : 'Start a Dota 2 match (draft phase) or run status in game console and paste below.'}
               </p>
               <button
                 onClick={handleParseClipboard}
+                className="interactive-press"
                 style={{
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  background: '#0EA5E9',
+                  padding: '11px 22px',
+                  borderRadius: '30px',
+                  background: 'var(--text-primary, #FFFFFF)',
                   border: 'none',
-                  color: '#040d1a',
-                  fontWeight: 700,
+                  color: 'var(--bg-app, #060608)',
+                  fontWeight: 800,
                   fontSize: '12.5px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 14px rgba(14, 165, 233, 0.4)'
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+                  transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.35)';
                 }}
               >
                 <Clipboard size={14} />
@@ -325,58 +370,66 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
             <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div
                 style={{
-                  width: '56px',
-                  height: '56px',
+                  width: '54px',
+                  height: '54px',
                   borderRadius: '50%',
                   background: 'rgba(16, 185, 129, 0.12)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#10B981',
-                  marginBottom: '14px',
-                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.18)'
+                  marginBottom: '14px'
                 }}
               >
-                <CheckCircle size={32} />
+                <CheckCircle2 size={28} />
               </div>
-              <div style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '0.04em' }}>
-                {isRu ? '🟢 СМУРФЫ НЕ ОБНАРУЖЕНЫ' : '🟢 NO SMURFS DETECTED'}
+              <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary, #fff)', letterSpacing: '0.04em' }}>
+                {isRu ? 'СМУРФЫ НЕ ОБНАРУЖЕНЫ' : 'NO SMURFS DETECTED'}
               </div>
-              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)', margin: '6px 0 20px 0' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary, #A0A0A0)', margin: '6px 0 20px 0' }}>
                 {isRu
                   ? `Проверено: ${enemies.length} противников · Подозрительных игроков: 0`
                   : `Checked: ${enemies.length} opponents · Suspicious: 0`}
               </div>
               <button
                 onClick={() => setForceShowAll(true)}
+                className="interactive-press"
                 style={{
-                  padding: '9px 18px',
-                  borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#fff',
+                  padding: '9px 20px',
+                  borderRadius: '30px',
+                  background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                  color: 'var(--text-primary, #fff)',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-highlight)';
+                  e.currentTarget.style.background = 'var(--bg-card-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.background = 'var(--bg-surface)';
                 }}
               >
                 {isRu ? 'Показать список игроков' : 'View player roster'}
               </button>
             </div>
           ) : currentEnemy ? (
-            /* Player Dossier (Fast 5-second reading) */
+            /* Player Dossier */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Opponent Carousel Switcher */}
+              {/* Carousel Switcher */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: 'rgba(0, 0, 0, 0.35)',
-                  padding: '5px 8px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.06)'
+                  background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                  padding: '4px 6px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))'
                 }}
               >
                 <button
@@ -388,7 +441,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: 'var(--text-secondary, #A0A0A0)',
                     cursor: 'pointer',
                     padding: '4px',
                     display: 'flex',
@@ -420,19 +473,18 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                           fontSize: '11.5px',
                           fontWeight: 700,
                           cursor: 'pointer',
-                          background: isSelected ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isSelected ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid rgba(255, 255, 255, 0.05)',
-                          color: isSelected ? '#fff' : 'rgba(255, 255, 255, 0.55)',
+                          background: isSelected ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                          border: isSelected ? '1px solid var(--border-highlight, rgba(255, 255, 255, 0.16))' : '1px solid transparent',
+                          color: isSelected ? 'var(--text-primary, #fff)' : 'var(--text-secondary, #A0A0A0)',
                           transition: 'all 140ms ease'
                         }}
                       >
                         <span
                           style={{
-                            width: '7px',
-                            height: '7px',
+                            width: '6px',
+                            height: '6px',
                             borderRadius: '50%',
-                            background: dotColor,
-                            boxShadow: `0 0 6px ${dotColor}`
+                            background: dotColor
                           }}
                         />
                         <span style={{ maxWidth: '85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -452,7 +504,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: 'var(--text-secondary, #A0A0A0)',
                     cursor: 'pointer',
                     padding: '4px',
                     display: 'flex',
@@ -466,21 +518,21 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
               {/* Suspicion Alert Banner */}
               {(() => {
                 const level = currentEnemy.smurfAnalysis.suspicionLevel;
-                let bg = 'rgba(16, 185, 129, 0.12)';
-                let border = 'rgba(16, 185, 129, 0.3)';
+                let bg = 'rgba(16, 185, 129, 0.1)';
+                let border = 'rgba(16, 185, 129, 0.25)';
                 let color = '#10B981';
 
                 if (level === 'high_smurf') {
-                  bg = 'rgba(239, 68, 68, 0.14)';
-                  border = 'rgba(239, 68, 68, 0.35)';
+                  bg = 'rgba(239, 68, 68, 0.1)';
+                  border = 'rgba(239, 68, 68, 0.25)';
                   color = '#EF4444';
                 } else if (level === 'high_suspicion') {
-                  bg = 'rgba(245, 158, 11, 0.14)';
-                  border = 'rgba(245, 158, 11, 0.35)';
+                  bg = 'rgba(245, 158, 11, 0.1)';
+                  border = 'rgba(245, 158, 11, 0.25)';
                   color = '#F59E0B';
                 } else if (level === 'suspicious') {
-                  bg = 'rgba(250, 204, 21, 0.14)';
-                  border = 'rgba(250, 204, 21, 0.35)';
+                  bg = 'rgba(250, 204, 21, 0.1)';
+                  border = 'rgba(250, 204, 21, 0.25)';
                   color = '#FACC15';
                 }
 
@@ -488,7 +540,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   <div
                     style={{
                       padding: '9px 14px',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       background: bg,
                       border: `1px solid ${border}`,
                       color: color,
@@ -498,8 +550,8 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {level === 'clean' ? <CheckCircle size={15} /> : <AlertTriangle size={15} />}
-                      <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      {level === 'clean' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+                      <span style={{ fontSize: '11.5px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                         {currentEnemy.smurfAnalysis.summaryHeadline || (isRu ? 'ПОДОЗРИТЕЛЬНЫХ ПРИЗНАКОВ НЕ НАЙДЕНО' : 'CLEAN ACCOUNT')}
                       </span>
                     </div>
@@ -516,10 +568,10 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.07)'
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -527,15 +579,15 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                     src={currentEnemy.avatar}
                     alt={currentEnemy.name}
                     style={{
-                      width: '42px',
-                      height: '42px',
+                      width: '40px',
+                      height: '40px',
                       borderRadius: '10px',
                       objectFit: 'cover',
-                      border: '1px solid rgba(255, 255, 255, 0.15)'
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))'
                     }}
                   />
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary, #fff)', lineHeight: 1.2 }}>
                       {currentEnemy.name}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
@@ -544,7 +596,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'var(--text-muted, #666)',
                           fontSize: '11px',
                           cursor: 'pointer',
                           display: 'flex',
@@ -556,9 +608,9 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                       >
                         <span>ID: {currentEnemy.accountId}</span>
                         {copiedId === currentEnemy.accountId ? (
-                          <Check size={12} style={{ color: '#10B981' }} />
+                          <Check size={11} style={{ color: '#10B981' }} />
                         ) : (
-                          <Copy size={12} style={{ opacity: 0.6 }} />
+                          <Copy size={11} style={{ opacity: 0.6 }} />
                         )}
                       </button>
                       {currentEnemy.profileUrl && (
@@ -566,7 +618,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                           href={currentEnemy.profileUrl}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'flex', alignItems: 'center' }}
+                          style={{ color: 'var(--text-dim, #444)', display: 'flex', alignItems: 'center' }}
                         >
                           <ExternalLink size={11} />
                         </a>
@@ -576,11 +628,11 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary, #fff)' }}>
                     {currentEnemy.rankName || (isRu ? 'Без ранга' : 'Unranked')}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
-                    MMR: <span style={{ color: '#E2E8F0', fontWeight: 600 }}>{currentEnemy.mmrDisplay}</span>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted, #666)', marginTop: '2px' }}>
+                    MMR: <span style={{ color: 'var(--text-secondary, #A0A0A0)', fontWeight: 600 }}>{currentEnemy.mmrDisplay}</span>
                   </div>
                 </div>
               </div>
@@ -590,14 +642,14 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 {/* Ranked */}
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    borderRadius: '12px',
+                    background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                    borderRadius: '10px',
                     padding: '10px',
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #666)' }}>
                     Ranked
                   </div>
                   <div
@@ -607,13 +659,13 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                       marginTop: '2px',
                       color:
                         currentEnemy.rankedStats.winrate !== null && currentEnemy.rankedStats.winrate >= 60
-                          ? '#F59E0B'
-                          : '#fff'
+                          ? '#EF4444'
+                          : 'var(--text-primary, #fff)'
                     }}
                   >
                     {currentEnemy.rankedStats.formatted}
                   </div>
-                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted, #666)', marginTop: '2px' }}>
                     {currentEnemy.rankedStats.detailText}
                   </div>
                 </div>
@@ -621,14 +673,14 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 {/* Turbo */}
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    borderRadius: '12px',
+                    background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                    borderRadius: '10px',
                     padding: '10px',
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #666)' }}>
                     Turbo
                   </div>
                   <div
@@ -638,13 +690,13 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                       marginTop: '2px',
                       color:
                         currentEnemy.turboStats.winrate !== null && currentEnemy.turboStats.winrate >= 60
-                          ? '#38BDF8'
-                          : '#fff'
+                          ? '#F59E0B'
+                          : 'var(--text-primary, #fff)'
                     }}
                   >
                     {currentEnemy.turboStats.formatted}
                   </div>
-                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted, #666)', marginTop: '2px' }}>
                     {currentEnemy.turboStats.detailText}
                   </div>
                 </div>
@@ -652,14 +704,14 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 {/* All Pick */}
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    borderRadius: '12px',
+                    background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                    borderRadius: '10px',
                     padding: '10px',
                     textAlign: 'center'
                   }}
                 >
-                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #666)' }}>
                     All Pick
                   </div>
                   <div
@@ -670,27 +722,27 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                       color:
                         currentEnemy.allPickStats.winrate !== null && currentEnemy.allPickStats.winrate >= 60
                           ? '#10B981'
-                          : '#fff'
+                          : 'var(--text-primary, #fff)'
                     }}
                   >
                     {currentEnemy.allPickStats.formatted}
                   </div>
-                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted, #666)', marginTop: '2px' }}>
                     {currentEnemy.allPickStats.detailText}
                   </div>
                 </div>
               </div>
 
-              {/* Signature Heroes (3-4 items) */}
+              {/* Signature Heroes */}
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
-                  borderRadius: '12px',
+                  background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                  borderRadius: '10px',
                   padding: '12px'
                 }}
               >
-                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #666)', marginBottom: '8px' }}>
                   {isRu ? 'Сигнатурные герои' : 'Signature Heroes'}
                 </div>
                 {currentEnemy.topHeroes && currentEnemy.topHeroes.length > 0 ? (
@@ -705,21 +757,21 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                           background: 'rgba(0, 0, 0, 0.25)',
                           padding: '6px 8px',
                           borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))'
                         }}
                       >
                         <img
                           src={h.heroIcon}
                           alt={h.heroName}
-                          style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                          style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--border-subtle)' }}
                         />
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #fff)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {h.heroName}
                           </div>
-                          <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #A0A0A0)' }}>
                             {h.games} {isRu ? 'игр' : 'games'} ·{' '}
-                            <span style={{ color: h.winrate >= 65 ? '#F59E0B' : '#E2E8F0', fontWeight: h.winrate >= 65 ? 700 : 500 }}>
+                            <span style={{ color: h.winrate >= 65 ? '#EF4444' : 'var(--text-primary, #fff)', fontWeight: h.winrate >= 65 ? 700 : 500 }}>
                               {h.winrate}% WR
                             </span>
                           </div>
@@ -728,7 +780,7 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' }}>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted, #666)', fontStyle: 'italic' }}>
                     {isRu ? 'Недостаточно сыгранных матчей на сигнатурах' : 'Not enough signature matches'}
                   </div>
                 )}
@@ -738,19 +790,19 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
               {currentEnemy.smurfAnalysis.reasons && currentEnemy.smurfAnalysis.reasons.length > 0 && (
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    borderRadius: '12px',
+                    background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                    borderRadius: '10px',
                     padding: '12px'
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #666)', marginBottom: '6px' }}>
                     {isRu ? 'Причины подозрения' : 'Reasons for suspicion'}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {currentEnemy.smurfAnalysis.reasons.map((r, i) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#CBD5E1', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: '#F59E0B', lineHeight: 1 }}>•</span>
+                      <div key={i} style={{ fontSize: '12px', color: 'var(--text-secondary, #A0A0A0)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <span style={{ color: '#EF4444', lineHeight: 1 }}>•</span>
                         <span>{r}</span>
                       </div>
                     ))}
@@ -758,11 +810,11 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 </div>
               )}
 
-              {/* Footer row: confidence & details toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '2px', fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.45)' }}>
+              {/* Footer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '2px', fontSize: '11.5px', color: 'var(--text-muted, #666)' }}>
                 <div>
                   {isRu ? 'Надёжность анализа:' : 'Analysis confidence:'}{' '}
-                  <span style={{ color: '#E2E8F0', fontWeight: 700 }}>
+                  <span style={{ color: 'var(--text-primary, #fff)', fontWeight: 700 }}>
                     {currentEnemy.smurfAnalysis.confidenceScore}%
                   </span>
                 </div>
@@ -772,11 +824,13 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#38BDF8',
+                    color: 'var(--text-primary, #fff)',
+                    opacity: 0.8,
                     fontWeight: 700,
                     fontSize: '11.5px',
                     cursor: 'pointer',
-                    padding: 0
+                    padding: 0,
+                    textDecoration: 'underline'
                   }}
                 >
                   {showDetails
@@ -791,17 +845,17 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                   style={{
                     marginTop: '4px',
                     padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.45)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'var(--bg-app, #060608)',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #fff)' }}>
                     <span>{isRu ? 'Последние матчи' : 'Recent Matches'}</span>
-                    <span style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #666)' }}>
                       {currentEnemy.recentMatches.length} {isRu ? 'матчей' : 'matches'}
                     </span>
                   </div>
@@ -817,31 +871,31 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                           fontSize: '11px',
                           padding: '5px 8px',
                           borderRadius: '6px',
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          border: '1px solid rgba(255, 255, 255, 0.04)'
+                          background: 'var(--bg-surface, rgba(24, 24, 30, 0.5))',
+                          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.04))'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src={m.heroIcon} alt={m.heroName} style={{ width: '16px', height: '16px', borderRadius: '3px', objectFit: 'cover' }} />
-                          <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{m.heroName}</span>
+                          <span style={{ color: 'var(--text-primary, #fff)', fontWeight: 500 }}>{m.heroName}</span>
                           <span style={{ fontWeight: 700, color: m.won ? '#10B981' : '#EF4444' }}>
                             {m.won ? (isRu ? 'Победа' : 'Win') : (isRu ? 'Поражение' : 'Loss')}
                           </span>
                         </div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontFamily: 'monospace' }}>{m.kda}</div>
+                        <div style={{ color: 'var(--text-muted, #666)', fontFamily: 'monospace' }}>{m.kda}</div>
                       </div>
                     ))}
                   </div>
 
                   {debugMode && currentEnemy.debugMatches && (
-                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                      <div style={{ fontSize: '10px', fontFamily: 'monospace', color: '#38BDF8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Bug size={11} />
                         <span>Debug Mode: Raw Match Data</span>
                       </div>
-                      <div style={{ maxHeight: '120px', overflowY: 'auto', background: 'rgba(0, 0, 0, 0.6)', padding: '6px', borderRadius: '6px', fontSize: '10px', fontFamily: 'monospace', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ maxHeight: '120px', overflowY: 'auto', background: 'rgba(0, 0, 0, 0.5)', padding: '6px', borderRadius: '6px', fontSize: '10px', fontFamily: 'monospace', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {currentEnemy.debugMatches.map((dm) => (
-                          <div key={dm.matchId} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '2px' }}>
+                          <div key={dm.matchId} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '2px' }}>
                             ID: <span style={{ color: '#fff' }}>{dm.matchId}</span> | GM: <span style={{ color: '#F59E0B' }}>{dm.gameMode}</span> | Lobby: <span style={{ color: '#38BDF8' }}>{dm.lobbyType}</span> | Won: <span style={{ color: dm.won ? '#10B981' : '#EF4444' }}>{dm.won ? 'true' : 'false'}</span>
                           </div>
                         ))}
