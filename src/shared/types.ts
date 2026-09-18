@@ -144,17 +144,45 @@ export interface CandidateExe {
   sourceLauncher?: GameSource;
 }
 
+export interface LiveGameStats {
+  game: 'dota2' | 'cs2';
+  title: string;
+  details: string;
+  state: string;
+  heroOrMap?: string;
+  scoreOrKDA?: string;
+  matchTime?: string;
+  heroIcon?: string;
+  level?: number;
+  kda?: { kills: number; deaths: number; assists: number };
+  paused?: boolean;
+  gameState?: string;
+  mode?: string;
+  teamScores?: { ct: number; t: number };
+}
+
+export interface ActiveGameInfo {
+  name: string;
+  exeName?: string;
+  gameId?: string;
+  startTime?: number;
+  coverUrl?: string;
+  isGsi?: boolean;
+  gsiStats?: LiveGameStats | null;
+}
+
 export interface StormPlayAPI {
   games: {
     getAll: () => Promise<Game[]>;
     getById: (id: string) => Promise<Game | null>;
-    toggleFavorite: (id: string) => Promise<boolean>;
+    getActiveGame: () => Promise<ActiveGameInfo | null>;
+    toggleFavorite: (id: string) => Promise<Game | null>;
     addCustom: (game: Partial<Game>) => Promise<Game>;
     update: (id: string, partial: Partial<Game>) => Promise<Game>;
     delete: (id: string) => Promise<boolean>;
     launch: (id: string) => Promise<{ success: boolean; error?: string }>;
     openInstallFolder: (id: string) => Promise<void>;
-    createDesktopShortcut: (id: string) => Promise<{ success: boolean; path?: string }>;
+    createDesktopShortcut: (id: string) => Promise<{ success: boolean; error?: string }>;
   };
   scanner: {
     syncAll: (force?: boolean) => Promise<{ games: Game[]; progress: ScannerProgress }>;
@@ -165,25 +193,31 @@ export interface StormPlayAPI {
     scanFolderForExecutables: (folderPath: string) => Promise<CandidateExe[]>;
     selectFolder: () => Promise<string | null>;
     selectFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;
-    getSteamStatus: () => Promise<{ installed: boolean; path?: string; libraries: string[] }>;
+    getSteamStatus: () => Promise<{ installed: boolean; libraries: string[] }>;
   };
   steamGrid: {
-    search: (gameName: string, type?: 'cover' | 'hero' | 'logo') => Promise<SteamGridArtItem[]>;
+    search: (query: string, type?: 'cover' | 'hero' | 'logo') => Promise<SteamGridArtItem[]>;
     applyArtwork: (gameId: string, type: 'cover' | 'hero' | 'logo', url: string) => Promise<Game>;
   };
+  steamgrid?: {
+    search: (query: string, type?: 'cover' | 'hero' | 'logo') => Promise<SteamGridArtItem[]>;
+    applyArtwork?: (gameId: string, type: 'cover' | 'hero' | 'logo', url: string) => Promise<Game>;
+    apply?: (gameId: string, type: 'cover' | 'hero' | 'logo', url: string) => Promise<Game>;
+  };
   achievements: {
-    get: (steamAppId: number) => Promise<{ total: number; unlocked: number; items: AchievementItem[] }>;
+    get: (steamAppId: number) => Promise<AchievementItem[]>;
   };
   screenshots: {
     get: (steamAppId: number) => Promise<string[]>;
     openFolder: (steamAppId: number) => Promise<void>;
+    open?: (steamAppId: number) => Promise<void>;
   };
   discord: {
     updateStatus: (activity: { state?: string; details?: string; gameName?: string }) => Promise<void>;
     setStatus: (statusType: 'menu' | 'searching' | 'settings' | 'launching' | 'playing', extra?: any) => Promise<boolean>;
   };
   gsi: {
-    getStats: () => Promise<any>;
+    getStats: () => Promise<LiveGameStats | null>;
   };
   sessions: {
     getAll: () => Promise<SessionRecord[]>;
@@ -221,7 +255,8 @@ export interface StormPlayAPI {
     onGameStopped: (callback: (data: { gameId: string; session: SessionRecord }) => void) => () => void;
     onScanProgress: (callback: (progress: ScannerProgress) => void) => () => void;
     onGamesUpdated: (callback: (games: Game[]) => void) => () => void;
-    onGSIUpdate: (callback: (stats: any) => void) => () => void;
+    onGSIUpdate: (callback: (stats: LiveGameStats | null) => void) => () => void;
+    onActiveGameChange: (callback: (active: ActiveGameInfo | null) => void) => () => void;
   };
 }
 

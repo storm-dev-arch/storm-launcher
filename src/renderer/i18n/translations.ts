@@ -179,6 +179,20 @@ export const translations = {
       gameRemoved: 'Игра удалена из библиотеки',
       steamSynced: 'Синхронизация Steam',
       foundGames: 'Найдено игр:'
+    },
+    nowPlaying: {
+      title: 'СЕЙЧАС В ИГРЕ',
+      inGame: 'В игре',
+      score: 'Счёт',
+      matchTime: 'Время',
+      kda: 'KDA',
+      paused: 'Пауза',
+      inMenu: 'В меню',
+      heroDemo: 'Демо-режим',
+      draft: 'Пики и баны',
+      preGame: 'Сбор рун',
+      viewGame: 'Открыть в лаунчере',
+      stopGame: 'Завершить игру'
     }
   },
   en: {
@@ -359,6 +373,20 @@ export const translations = {
       gameRemoved: 'Game removed from library',
       steamSynced: 'Steam Sync Complete',
       foundGames: 'Games discovered:'
+    },
+    nowPlaying: {
+      title: 'NOW PLAYING',
+      inGame: 'In Game',
+      score: 'Score',
+      matchTime: 'Time',
+      kda: 'KDA',
+      paused: 'Paused',
+      inMenu: 'In Menu',
+      heroDemo: 'Hero Demo',
+      draft: 'Draft Phase',
+      preGame: 'Rune Phase',
+      viewGame: 'View in Launcher',
+      stopGame: 'Stop Game'
     }
   }
 };

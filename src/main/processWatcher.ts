@@ -59,6 +59,21 @@ export class ProcessWatcherService {
     return this.activeGameName;
   }
 
+  public getActiveGameInfo(): {
+    name: string;
+    startTime: number;
+    coverUrl?: string;
+    isTool: boolean;
+  } | null {
+    if (!this.activeGameName) return null;
+    return {
+      name: this.activeGameName,
+      startTime: this.activeGameStart,
+      coverUrl: this.activeCoverUrl,
+      isTool: this.activeIsTool
+    };
+  }
+
   private checkProcesses() {
     if (this.isChecking) return;
     this.isChecking = true;
@@ -171,8 +186,17 @@ export class ProcessWatcherService {
             discordRPC.setInGame(foundGame.name, this.activeGameStart, foundGame.coverUrl, isTool);
           }
           const matchedGame = games.find(g => g.name.toLowerCase() === foundGame.name.toLowerCase());
-          if (matchedGame && this.win && !this.win.isDestroyed()) {
-            this.win.webContents.send('play:game:launched', { ...matchedGame, isRunning: true });
+          if (this.win && !this.win.isDestroyed()) {
+            if (matchedGame) {
+              this.win.webContents.send('play:game:launched', { ...matchedGame, isRunning: true });
+            }
+            this.win.webContents.send('play:game:activeChange', {
+              name: foundGame.name,
+              startTime: this.activeGameStart,
+              coverUrl: foundGame.coverUrl,
+              gameId: matchedGame?.id,
+              isTool
+            });
           }
         }
       } else {
@@ -183,6 +207,9 @@ export class ProcessWatcherService {
           this.activeCoverUrl = undefined;
           this.activeIsTool = false;
           discordRPC.setIdle(games.length);
+          if (this.win && !this.win.isDestroyed()) {
+            this.win.webContents.send('play:game:activeChange', null);
+          }
         }
       }
     });

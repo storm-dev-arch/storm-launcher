@@ -100,15 +100,8 @@ function formatCSMap(rawMap: string, lang: 'ru' | 'en'): string {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
-export interface LiveGameStats {
-  game: 'dota2' | 'cs2';
-  title: string;
-  details: string;
-  state: string;
-  heroOrMap?: string;
-  scoreOrKDA?: string;
-  matchTime?: string;
-}
+import type { LiveGameStats } from '../shared/types';
+export type { LiveGameStats };
 
 export class GSIService {
   private server: http.Server | null = null;
@@ -348,6 +341,10 @@ export class GSIService {
       state = isRu ? 'В главном меню' : 'In Main Menu';
     }
 
+    const heroIconUrl = heroRaw
+      ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${cleanHero}.png`
+      : undefined;
+
     this.lastStats = {
       game: 'dota2',
       title: 'Dota 2',
@@ -355,12 +352,13 @@ export class GSIService {
       state,
       heroOrMap: heroName,
       scoreOrKDA: kdaStr,
-      matchTime: timeStr
+      matchTime: timeStr,
+      heroIcon: heroIconUrl,
+      level,
+      kda: { kills, deaths, assists },
+      paused: isPaused,
+      gameState
     };
-
-    const heroIconUrl = heroRaw
-      ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${cleanHero}.png`
-      : undefined;
 
     discordRPC.setActivity({
       details,
@@ -413,7 +411,10 @@ export class GSIService {
       state,
       heroOrMap: mapName,
       scoreOrKDA: scoreStr,
-      matchTime: undefined
+      matchTime: undefined,
+      mode,
+      kda: { kills, deaths, assists },
+      teamScores: { ct: ctScore, t: tScore }
     };
 
     discordRPC.setActivity({

@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { translations, Language } from '../i18n/translations';
 import { soundEngine } from '../audio/soundEngine';
+import { NowPlayingWidget } from './NowPlayingWidget';
+import type { ActiveGameInfo, LiveGameStats, Game } from '../../shared/types';
 
 export type PageId =
   | 'overview'
@@ -42,6 +44,10 @@ interface SidebarProps {
   gogCount?: number;
   onAddCustomGame: () => void;
   language: Language;
+  activeGame?: ActiveGameInfo | null;
+  gsiStats?: LiveGameStats | null;
+  activeGameData?: Game | null;
+  onOpenDetails?: (game: Game) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -54,7 +60,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   epicCount = 0,
   gogCount = 0,
   onAddCustomGame,
-  language
+  language,
+  activeGame,
+  gsiStats,
+  activeGameData,
+  onOpenDetails
 }) => {
   const t = translations[language].nav;
 
@@ -253,6 +263,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div>
+        {(activeGame || gsiStats) && (
+          <div style={{ marginBottom: '12px' }}>
+            <NowPlayingWidget
+              variant="sidebar"
+              activeGame={activeGame || null}
+              gsiStats={gsiStats || null}
+              gameData={activeGameData}
+              language={language}
+              onOpenDetails={onOpenDetails}
+            />
+          </div>
+        )}
+
         <button
           onClick={() => {
             soundEngine.playClick();
@@ -293,7 +316,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>{t.settings}</span>
         </button>
 
-
         <div
           style={{
             padding: '10px 12px 2px 12px',
@@ -306,7 +328,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <span style={{ fontWeight: 600 }}>STORM LAUNCHER</span>
-          <span style={{ padding: '1px 6px', borderRadius: '6px', background: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>v1.0.0</span>
+          <span style={{ padding: '1px 6px', borderRadius: '6px', background: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>v1.2.2</span>
         </div>
       </div>
     </aside>

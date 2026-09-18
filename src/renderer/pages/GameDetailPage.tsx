@@ -174,7 +174,14 @@ export const GameDetailPage: React.FC<GameDetailPageProps> = ({
 
   useEffect(() => {
     if (game.steamAppId) {
-      window.stormPlay.achievements.get(game.steamAppId).then(setAchievements).catch(() => {});
+      window.stormPlay.achievements.get(game.steamAppId).then((items) => {
+        if (Array.isArray(items)) {
+          const unlocked = items.filter(a => a.unlocked).length;
+          setAchievements({ total: items.length, unlocked, items });
+        } else {
+          setAchievements(items as any);
+        }
+      }).catch(() => {});
       window.stormPlay.screenshots.get(game.steamAppId).then(setScreenshots).catch(() => {});
     } else {
       setAchievements(null);

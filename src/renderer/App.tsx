@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Game, CollectionRecord, LauncherSettings, ScannerProgress, CandidateExe } from '../shared/types';
+import type { Game, CollectionRecord, LauncherSettings, ScannerProgress, CandidateExe, ActiveGameInfo, LiveGameStats } from '../shared/types';
 import { TitleBar } from './components/TitleBar';
 import { Sidebar, PageId } from './components/Sidebar';
 import { ToastContainer, ToastMessage } from './components/Toast';
@@ -62,6 +62,22 @@ export const App: React.FC = () => {
   const [isRandomOpen, setIsRandomOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [steamGridGame, setSteamGridGame] = useState<Game | null>(null);
+  const [activeGame, setActiveGame] = useState<ActiveGameInfo | null>(null);
+  const [liveGsiStats, setLiveGsiStats] = useState<LiveGameStats | null>(null);
+
+  const activeGameData = React.useMemo(() => {
+    if (!activeGame) return null;
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const activeNameNorm = norm(activeGame.name || '');
+    return games.find(g => {
+      const gNameNorm = norm(g.name);
+      if (gNameNorm === activeNameNorm) return true;
+      if (activeGame.exeName && g.executable && g.executable.toLowerCase().endsWith(activeGame.exeName.toLowerCase())) return true;
+      if (activeNameNorm.includes('dota') && gNameNorm.includes('dota')) return true;
+      if (activeNameNorm.includes('counterstrike') && gNameNorm.includes('counterstrike')) return true;
+      return false;
+    }) || null;
+  }, [activeGame, games]);
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; game: Game } | null>(null);
 
@@ -178,6 +194,14 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
+    // Initial active game fetch
+    window.stormPlay.games.getActiveGame().then(info => {
+      if (info) {
+        setActiveGame(info);
+        if (info.gsiStats) setLiveGsiStats(info.gsiStats);
+      }
+    }).catch(err => console.warn('Failed to get active game:', err));
+
     const unsubProgress = window.stormPlay.events.onScanProgress((prog) => {
       setScanProgress(prog);
     });
@@ -193,10 +217,25 @@ export const App: React.FC = () => {
       const mins = Math.max(1, Math.round(data.session?.durationMinutes || 0));
       addToast('info', t.sessionEnded, `${t.playedFor} ${mins}m`, 4000);
       refreshGames();
+      setActiveGame(null);
+      setLiveGsiStats(null);
     });
 
     const unsubUpdated = window.stormPlay.events.onGamesUpdated((updatedGames) => {
       setGames(updatedGames);
+    });
+
+    const unsubActiveGame = window.stormPlay.events.onActiveGameChange((info) => {
+      setActiveGame(info);
+      if (info?.gsiStats) {
+        setLiveGsiStats(info.gsiStats);
+      } else if (!info) {
+        setLiveGsiStats(null);
+      }
+    });
+
+    const unsubGSI = window.stormPlay.events.onGSIUpdate((stats) => {
+      setLiveGsiStats(stats);
     });
 
     return () => {
@@ -204,6 +243,8 @@ export const App: React.FC = () => {
       unsubLaunch();
       unsubStopped();
       unsubUpdated();
+      unsubActiveGame();
+      unsubGSI();
     };
   }, [addToast, refreshGames, language]);
 
@@ -496,6 +537,10 @@ export const App: React.FC = () => {
         gameCount={games.length}
         language={language}
         onToggleLanguage={handleToggleLanguage}
+        activeGame={activeGame}
+        gsiStats={liveGsiStats}
+        activeGameData={activeGameData}
+        onOpenDetails={(game) => setSelectedGame(game)}
       />
 
       <div 
@@ -517,6 +562,10 @@ export const App: React.FC = () => {
           gogCount={gogCount}
           onAddCustomGame={() => setIsAddOpen(true)}
           language={language}
+          activeGame={activeGame}
+          gsiStats={liveGsiStats}
+          activeGameData={activeGameData}
+          onOpenDetails={(game) => setSelectedGame(game)}
         />
 
         <main
@@ -557,6 +606,9 @@ export const App: React.FC = () => {
                   onContextMenu={handleContextMenu}
                   onNavigate={(page) => setActivePage(page)}
                   language={language}
+                  activeGame={activeGame}
+                  gsiStats={liveGsiStats}
+                  activeGameData={activeGameData}
                 />
               ) : isLibraryView ? (
                 <LibraryPage

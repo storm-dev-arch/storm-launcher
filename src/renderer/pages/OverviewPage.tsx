@@ -1,9 +1,10 @@
 import React from 'react';
 import { Play, Star, Clock, Zap, CheckCircle2, ChevronRight, Gamepad2, ArrowUpRight } from 'lucide-react';
-import type { Game } from '../../shared/types';
+import type { Game, ActiveGameInfo, LiveGameStats } from '../../shared/types';
 import type { PageId } from '../components/Sidebar';
 import { GameCard } from '../components/GameCard';
 import { translations, Language } from '../i18n/translations';
+import { NowPlayingWidget } from '../components/NowPlayingWidget';
 
 interface OverviewPageProps {
   games: Game[];
@@ -13,6 +14,9 @@ interface OverviewPageProps {
   onContextMenu: (e: React.MouseEvent, game: Game) => void;
   onNavigate: (page: PageId) => void;
   language: Language;
+  activeGame?: ActiveGameInfo | null;
+  gsiStats?: LiveGameStats | null;
+  activeGameData?: Game | null;
 }
 
 export const OverviewPage: React.FC<OverviewPageProps> = ({
@@ -22,7 +26,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   onToggleFavorite,
   onContextMenu,
   onNavigate,
-  language
+  language,
+  activeGame,
+  gsiStats,
+  activeGameData
 }) => {
   const t = translations[language].overview;
 
@@ -44,6 +51,19 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
   return (
     <div style={{ padding: '28px 36px', maxWidth: '1400px', margin: '0 auto' }}>
+      {(activeGame || gsiStats) && (
+        <div style={{ marginBottom: '28px' }}>
+          <NowPlayingWidget
+            variant="banner"
+            activeGame={activeGame || null}
+            gsiStats={gsiStats || null}
+            gameData={activeGameData}
+            language={language}
+            onOpenDetails={onOpenDetails}
+          />
+        </div>
+      )}
+
       {featuredGame && (
         <section
           style={{

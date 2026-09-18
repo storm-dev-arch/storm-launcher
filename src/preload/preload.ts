@@ -14,6 +14,7 @@ const api: StormPlayAPI = {
   games: {
     getAll: () => safeInvoke('play:games:getAll'),
     getById: (id: string) => safeInvoke('play:games:getById', id),
+    getActiveGame: () => safeInvoke('play:game:getActive'),
     toggleFavorite: (id: string) => safeInvoke('play:games:toggleFavorite', id),
     addCustom: (game: Partial<Game>) => safeInvoke('play:games:addCustom', game),
     update: (id: string, partial: Partial<Game>) => safeInvoke('play:games:update', id, partial),
@@ -108,6 +109,11 @@ const api: StormPlayAPI = {
       const handler = (_: any, stats: any) => callback(stats);
       ipcRenderer.on('play:gsi:update', handler);
       return () => ipcRenderer.removeListener('play:gsi:update', handler);
+    },
+    onActiveGameChange: (callback) => {
+      const handler = (_: any, active: any) => callback(active);
+      ipcRenderer.on('play:game:activeChange', handler);
+      return () => ipcRenderer.removeListener('play:game:activeChange', handler);
     }
   }
 };

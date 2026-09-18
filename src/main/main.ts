@@ -245,6 +245,26 @@ app.on('activate', () => {
 
 ipcMain.handle('play:games:getAll', () => db.getGames());
 ipcMain.handle('play:games:getById', (_, id) => db.getGame(id) || null);
+ipcMain.handle('play:games:getActive', () => {
+  const gsiStats = gsiService.getStats();
+  const watcherInfo = processWatcher.getActiveGameInfo();
+  if (gsiStats) {
+    return {
+      name: gsiStats.title,
+      isGsi: true,
+      gsiStats
+    };
+  }
+  if (watcherInfo) {
+    return {
+      name: watcherInfo.name,
+      startTime: watcherInfo.startTime,
+      coverUrl: watcherInfo.coverUrl,
+      isGsi: false
+    };
+  }
+  return null;
+});
 ipcMain.handle('play:games:toggleFavorite', (_, id) => db.toggleFavorite(id));
 ipcMain.handle('play:games:addCustom', (_, gameData) => {
   const newGame = {
