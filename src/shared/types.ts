@@ -171,6 +171,73 @@ export interface ActiveGameInfo {
   gsiStats?: LiveGameStats | null;
 }
 
+export interface PlayerHeroStats {
+  heroId: number;
+  heroName: string;
+  heroIcon: string;
+  games: number;
+  wins: number;
+  winrate: number;
+}
+
+export interface PlayerRecentMatch {
+  matchId: string | number;
+  heroId: number;
+  heroName: string;
+  heroIcon: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kda: string;
+  won: boolean;
+  durationSeconds: number;
+  playedAt: number;
+}
+
+export interface SmurfThreatAnalysis {
+  isSmurfSuspect: boolean;
+  threatLevel: 'low' | 'medium' | 'high';
+  confidenceScore: number; // 0 - 100
+  reasons: string[];
+  winStreak: number;
+  loseStreak: number;
+  isOneTrickPony: boolean;
+  signatureHeroAlert?: string;
+  recentWinrate: number; // last 20 games winrate %
+}
+
+export interface PlayerDossier {
+  accountId: number;
+  steamId64?: string;
+  name: string;
+  avatar: string;
+  profileUrl: string;
+  isPrivate: boolean;
+  rankTier?: number;
+  rankName?: string;
+  rankStars?: number;
+  rankBadgeUrl?: string;
+  leaderboardRank?: number;
+  estimatedMmr?: number;
+  wins: number;
+  losses: number;
+  totalGames: number;
+  overallWinrate: number;
+  topHeroes: PlayerHeroStats[];
+  recentMatches: PlayerRecentMatch[];
+  smurfAnalysis: SmurfThreatAnalysis;
+  team?: 'radiant' | 'dire' | 'unassigned';
+}
+
+export interface LobbyRoster {
+  radiant: PlayerDossier[];
+  dire: PlayerDossier[];
+  unassigned: PlayerDossier[];
+  totalPlayers: number;
+  smurfCount: number;
+  privateCount: number;
+}
+
 export interface StormPlayAPI {
   games: {
     getAll: () => Promise<Game[]>;
@@ -218,6 +285,11 @@ export interface StormPlayAPI {
   };
   gsi: {
     getStats: () => Promise<LiveGameStats | null>;
+  };
+  inspector: {
+    getDossier: (queryOrId: string | number) => Promise<PlayerDossier>;
+    parseLobby: (rawText: string) => Promise<LobbyRoster>;
+    getMyProfile: () => Promise<PlayerDossier | null>;
   };
   sessions: {
     getAll: () => Promise<SessionRecord[]>;

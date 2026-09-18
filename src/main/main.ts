@@ -16,6 +16,7 @@ import { achievementEngine } from './achievementEngine';
 import { screenshotManager } from './screenshotManager';
 import { gsiService } from './gsiService';
 import { processWatcher } from './processWatcher';
+import { inspectorService } from './inspectorService';
 
 let mainWindow: BrowserWindow | null = null;
 let miniWindow: BrowserWindow | null = null;
@@ -437,7 +438,32 @@ ipcMain.handle('play:discord:setStatus', (_, statusType: string, extra?: any) =>
   }
   return true;
 });
+ipcMain.handle('play:game:getActive', () => {
+  const gsiStats = gsiService.getStats();
+  const watcherInfo = processWatcher.getActiveGameInfo();
+  if (gsiStats) {
+    return {
+      name: gsiStats.title,
+      isGsi: true,
+      gsiStats
+    };
+  }
+  if (watcherInfo) {
+    return {
+      name: watcherInfo.name,
+      startTime: watcherInfo.startTime,
+      coverUrl: watcherInfo.coverUrl,
+      isGsi: false
+    };
+  }
+  return null;
+});
 ipcMain.handle('play:gsi:getStats', () => gsiService.getStats());
+
+// Inspector IPC handlers
+ipcMain.handle('play:inspector:getDossier', (_, queryOrId) => inspectorService.getDossier(queryOrId));
+ipcMain.handle('play:inspector:parseLobby', (_, rawText) => inspectorService.parseLobby(rawText));
+ipcMain.handle('play:inspector:getMyProfile', () => inspectorService.getMyProfile());
 
 ipcMain.handle('play:sessions:getAll', () => db.getSessions());
 ipcMain.handle('play:sessions:getStats', () => db.getStats());

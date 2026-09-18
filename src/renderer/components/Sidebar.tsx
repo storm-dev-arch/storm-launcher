@@ -12,7 +12,8 @@ import {
   Gamepad2,
   FolderCode,
   Zap,
-  Globe
+  Globe,
+  Crosshair
 } from 'lucide-react';
 import { translations, Language } from '../i18n/translations';
 import { soundEngine } from '../audio/soundEngine';
@@ -27,6 +28,7 @@ export type PageId =
   | 'recent'
   | 'collections'
   | 'statistics'
+  | 'inspector'
   | 'settings'
   | 'steam'
   | 'epic'
@@ -80,7 +82,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'favorites' as PageId, label: t.favorites, icon: Star, badge: favoriteCount },
     { id: 'recent' as PageId, label: t.recent, icon: Clock },
     { id: 'collections' as PageId, label: t.collections, icon: FolderClosed },
-    { id: 'statistics' as PageId, label: t.statistics, icon: BarChart2 }
+    { id: 'statistics' as PageId, label: t.statistics, icon: BarChart2 },
+    { id: 'inspector' as PageId, label: t.inspector, icon: Crosshair }
   ];
 
   return (

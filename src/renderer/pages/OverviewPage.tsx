@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Star, Clock, Zap, CheckCircle2, ChevronRight, Gamepad2, ArrowUpRight } from 'lucide-react';
+import { Play, Star, Clock, Zap, CheckCircle2, ChevronRight, Gamepad2, ArrowUpRight, Crosshair } from 'lucide-react';
 import type { Game, ActiveGameInfo, LiveGameStats } from '../../shared/types';
 import type { PageId } from '../components/Sidebar';
 import { GameCard } from '../components/GameCard';
@@ -341,6 +341,40 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   <span>{language === 'ru' ? 'Подробнее' : 'Details'}</span>
                   <ChevronRight size={15} />
                 </button>
+
+                {(featuredGame.steamAppId === 570 || featuredGame.steamAppId === 730 || isPlaying) && (
+                  <button
+                    onClick={() => onNavigate('inspector')}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '30px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      color: '#38BDF8',
+                      background: 'rgba(56, 189, 248, 0.1)',
+                      border: '1px solid rgba(56, 189, 248, 0.25)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                      cursor: 'pointer',
+                      transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)';
+                      e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.25)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <Crosshair size={15} />
+                    <span>{language === 'ru' ? 'Разведка лобби' : 'Lobby Inspector'}</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

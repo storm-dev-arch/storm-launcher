@@ -53,6 +53,11 @@ const api: StormPlayAPI = {
   gsi: {
     getStats: () => safeInvoke('play:gsi:getStats')
   },
+  inspector: {
+    getDossier: (queryOrId: string | number) => safeInvoke('play:inspector:getDossier', queryOrId),
+    parseLobby: (rawText: string) => safeInvoke('play:inspector:parseLobby', rawText),
+    getMyProfile: () => safeInvoke('play:inspector:getMyProfile')
+  },
   sessions: {
     getAll: () => safeInvoke('play:sessions:getAll'),
     getStats: () => safeInvoke('play:sessions:getStats'),
