@@ -156,15 +156,10 @@ function createWindow() {
     });
   });
 
-  mainWindow.on('close', (event) => {
-    const currentSettings = db.getSettings();
-    if (!isQuitting && currentSettings.minimizeToTray !== false) {
-      event.preventDefault();
-      mainWindow?.hide();
-      if (miniWindow && !miniWindow.isDestroyed()) {
-        miniWindow.hide();
-      }
-    }
+  mainWindow.on('close', () => {
+    isQuitting = true;
+    processWatcher.stop();
+    discordRPC.clearActivity();
   });
 
   mainWindow.on('closed', () => {
@@ -173,6 +168,8 @@ function createWindow() {
       miniWindow.close();
     }
     miniWindow = null;
+    app.quit();
+    process.exit(0);
   });
 }
 
@@ -577,11 +574,17 @@ ipcMain.on('play:system:maximize', () => {
   }
 });
 ipcMain.on('play:system:close', () => {
-  if (mainWindow?.isVisible()) {
-    mainWindow.hide();
-  } else {
-    mainWindow?.close();
+  isQuitting = true;
+  processWatcher.stop();
+  discordRPC.clearActivity();
+  if (miniWindow && !miniWindow.isDestroyed()) {
+    miniWindow.close();
   }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close();
+  }
+  app.quit();
+  process.exit(0);
 });
 ipcMain.on('play:system:showMain', () => {
   if (mainWindow) {

@@ -1,6 +1,6 @@
 {
   "name": "storm-launcher",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Modern Black Glassmorphism Game Launcher & Library Manager for Windows",
   "main": "dist-electron/main.js",
   "scripts": {

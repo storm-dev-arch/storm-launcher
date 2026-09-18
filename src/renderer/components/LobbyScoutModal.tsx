@@ -9,12 +9,11 @@ import {
   ChevronRight,
   Clipboard,
   Bug,
-  HelpCircle,
   Shield,
   Zap,
   ExternalLink
 } from 'lucide-react';
-import type { PlayerDossier, LobbyRoster, DebugMatchInfo } from '../../shared/types';
+import type { PlayerDossier, LobbyRoster } from '../../shared/types';
 
 interface LobbyScoutModalProps {
   isOpen: boolean;
@@ -39,7 +38,6 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
   const [debugMode, setDebugMode] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
-  // Sync initialRoster if provided
   useEffect(() => {
     if (initialRoster) {
       setRoster(initialRoster);
@@ -47,7 +45,6 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
     }
   }, [initialRoster]);
 
-  // Pick enemies (Dire if Radiant, or just first 5 enemies)
   const enemies: PlayerDossier[] = React.useMemo(() => {
     if (!roster) return [];
     if (roster.dire.length > 0) return roster.dire;
@@ -111,157 +108,334 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
   const currentEnemy: PlayerDossier | undefined = enemies[selectedEnemyIndex];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-      {/* Modal Container: Compact 580px width, clean glassmorphism */}
-      <div className="relative w-full max-w-[600px] bg-[#0d0f17] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-slate-200">
-        
-        {/* Top Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-b border-white/5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Zap className="w-4 h-4" />
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.80)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '16px',
+        animation: 'fadeIn 180ms ease'
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '580px',
+          maxWidth: '94vw',
+          maxHeight: '88vh',
+          background: 'rgba(13, 15, 23, 0.97)',
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '20px',
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 1px 1px rgba(255, 255, 255, 0.08)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          color: '#E2E8F0',
+          position: 'relative',
+          fontFamily: 'inherit'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '14px 18px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.07)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#F59E0B'
+              }}
+            >
+              <Zap size={16} />
             </div>
             <div>
-              <h2 className="text-sm font-bold tracking-wide uppercase text-white flex items-center gap-2">
-                {isRu ? 'Разведка лобби' : 'Lobby Scout'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#fff' }}>
+                  {isRu ? 'Разведка лобби' : 'Lobby Scout'}
+                </span>
                 {loading && (
-                  <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#38BDF8',
+                      boxShadow: '0 0 8px #38BDF8',
+                      display: 'inline-block'
+                    }}
+                  />
                 )}
-              </h2>
-              <p className="text-[11px] text-slate-400 font-medium">
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '1px' }}>
                 {loading
                   ? (isRu ? 'Анализируем противников...' : 'Analyzing opponents...')
                   : enemies.length > 0
                   ? (isRu ? `${enemies.length} противников · анализ завершён` : `${enemies.length} opponents · analyzed`)
                   : (isRu ? 'Ожидание матча или вставьте status' : 'Waiting for match or paste status')}
-              </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
               onClick={handleParseClipboard}
               disabled={loading}
               title={isRu ? 'Вставить вывод status из буфера' : 'Paste status from clipboard'}
-              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 hover:text-white border border-white/5 transition flex items-center gap-1.5"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#E2E8F0',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: loading ? 'wait' : 'pointer',
+                transition: 'all 160ms ease'
+              }}
             >
-              <Clipboard className="w-3.5 h-3.5 text-cyan-400" />
+              <Clipboard size={13} style={{ color: '#38BDF8' }} />
               <span>{isRu ? 'Вставить status' : 'Paste status'}</span>
             </button>
 
             <button
               onClick={() => setDebugMode(!debugMode)}
               title={isRu ? 'Режим отладки (Debug Mode)' : 'Debug Mode'}
-              className={`p-1.5 rounded-lg border transition ${
-                debugMode
-                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
-                  : 'bg-white/5 text-slate-400 hover:text-white border-white/5'
-              }`}
+              style={{
+                padding: '7px',
+                borderRadius: '8px',
+                background: debugMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                border: `1px solid ${debugMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                color: debugMode ? '#38BDF8' : 'rgba(255, 255, 255, 0.6)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 160ms ease'
+              }}
             >
-              <Bug className="w-3.5 h-3.5" />
+              <Bug size={14} />
             </button>
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/5 transition ml-1"
+              style={{
+                padding: '7px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 160ms ease'
+              }}
             >
-              <X className="w-4 h-4" />
+              <X size={14} />
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-5 overflow-y-auto max-h-[75vh]">
+        {/* Body Container */}
+        <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(88vh - 65px)' }}>
           {loading ? (
             /* Loading State */
-            <div className="py-12 flex flex-col items-center justify-center text-center">
-              <div className="w-10 h-10 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin mb-3" />
-              <p className="text-sm font-semibold text-white">
+            <div style={{ padding: '40px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  border: '3px solid rgba(56, 189, 248, 0.2)',
+                  borderTopColor: '#38BDF8',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  marginBottom: '12px'
+                }}
+              />
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
                 {isRu ? 'Анализируем противников...' : 'Analyzing opponents...'}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                {isRu ? 'Сбор винрейтов Ranked, Turbo, All Pick и сигнатур' : 'Fetching Ranked, Turbo, All Pick winrates & signatures'}
-              </p>
+              </div>
+              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
+                {isRu ? 'Сбор винрейтов Ranked, Turbo, All Pick и сигнатурок' : 'Fetching Ranked, Turbo, All Pick winrates & signatures'}
+              </div>
             </div>
           ) : enemies.length === 0 ? (
             /* Empty State */
-            <div className="py-10 flex flex-col items-center justify-center text-center">
-              <Shield className="w-12 h-12 text-slate-600 mb-3" />
-              <p className="text-sm font-semibold text-slate-200">
+            <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                <Shield size={26} />
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
                 {isRu ? 'Нет активных данных лобби' : 'No active lobby data'}
-              </p>
-              <p className="text-xs text-slate-400 max-w-sm mt-1 mb-4">
+              </div>
+              <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', maxWidth: '380px', margin: '8px auto 18px auto', lineHeight: '1.4' }}>
                 {isRu
                   ? 'Запустите матч в Dota 2 (стадия пиков) или скопируйте в консоли команду status и нажмите кнопку ниже.'
                   : 'Start a Dota 2 match (draft phase) or run status in game console and paste below.'}
               </p>
               <button
                 onClick={handleParseClipboard}
-                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-cyan-500/20"
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  background: '#0EA5E9',
+                  border: 'none',
+                  color: '#040d1a',
+                  fontWeight: 700,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(14, 165, 233, 0.4)'
+                }}
               >
-                <Clipboard className="w-4 h-4" />
+                <Clipboard size={14} />
                 <span>{isRu ? 'Вставить консольный status' : 'Paste console status'}</span>
               </button>
             </div>
           ) : !hasSuspicious && !forceShowAll ? (
             /* All Normal / Clean Screen */
-            <div className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 shadow-lg shadow-emerald-500/10">
-                <CheckCircle className="w-8 h-8" />
+            <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#10B981',
+                  marginBottom: '14px',
+                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.18)'
+                }}
+              >
+                <CheckCircle size={32} />
               </div>
-              <h3 className="text-base font-black text-white tracking-wide">
+              <div style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '0.04em' }}>
                 {isRu ? '🟢 СМУРФЫ НЕ ОБНАРУЖЕНЫ' : '🟢 NO SMURFS DETECTED'}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 mb-5">
+              </div>
+              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)', margin: '6px 0 20px 0' }}>
                 {isRu
                   ? `Проверено: ${enemies.length} противников · Подозрительных игроков: 0`
                   : `Checked: ${enemies.length} opponents · Suspicious: 0`}
-              </p>
+              </div>
               <button
                 onClick={() => setForceShowAll(true)}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-200 border border-white/10 transition"
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
               >
                 {isRu ? 'Показать список игроков' : 'View player roster'}
               </button>
             </div>
           ) : currentEnemy ? (
-            /* Player Dossier Card (Fast 5-second reading) */
-            <div className="space-y-4">
-              {/* Opponent Carousel Selector */}
-              <div className="flex items-center justify-between bg-black/30 p-1.5 rounded-xl border border-white/5">
+            /* Player Dossier (Fast 5-second reading) */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Opponent Carousel Switcher */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(0, 0, 0, 0.35)',
+                  padding: '5px 8px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.06)'
+                }}
+              >
                 <button
                   onClick={() =>
                     setSelectedEnemyIndex((prev) =>
                       prev > 0 ? prev - 1 : enemies.length - 1
                     )
                   }
-                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition"
-                  title="Предыдущий игрок"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft size={16} />
                 </button>
 
-                <div className="flex items-center gap-1.5 overflow-x-auto">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto' }}>
                   {enemies.map((e, idx) => {
                     const isSelected = idx === selectedEnemyIndex;
                     const level = e.smurfAnalysis.suspicionLevel;
-                    let dotColor = 'bg-emerald-400';
-                    if (level === 'high_smurf') dotColor = 'bg-red-500 animate-pulse';
-                    else if (level === 'high_suspicion') dotColor = 'bg-amber-500';
-                    else if (level === 'suspicious') dotColor = 'bg-yellow-400';
+                    let dotColor = '#10B981';
+                    if (level === 'high_smurf') dotColor = '#EF4444';
+                    else if (level === 'high_suspicion') dotColor = '#F59E0B';
+                    else if (level === 'suspicious') dotColor = '#FACC15';
 
                     return (
                       <button
                         key={e.accountId || idx}
                         onClick={() => setSelectedEnemyIndex(idx)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                          isSelected
-                            ? 'bg-white/15 text-white border border-white/20'
-                            : 'bg-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
-                        }`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: isSelected ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                          border: isSelected ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid rgba(255, 255, 255, 0.05)',
+                          color: isSelected ? '#fff' : 'rgba(255, 255, 255, 0.55)',
+                          transition: 'all 140ms ease'
+                        }}
                       >
-                        <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-                        <span className="truncate max-w-[80px]">
+                        <span
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            background: dotColor,
+                            boxShadow: `0 0 6px ${dotColor}`
+                          }}
+                        />
+                        <span style={{ maxWidth: '85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {e.name || `P${idx + 1}`}
                         </span>
                       </button>
@@ -275,66 +449,116 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                       prev < enemies.length - 1 ? prev + 1 : 0
                     )
                   }
-                  className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition"
-                  title="Следующий игрок"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight size={16} />
                 </button>
               </div>
 
               {/* Suspicion Alert Banner */}
-              <div
-                className={`px-4 py-2.5 rounded-xl border flex items-center justify-between ${
-                  currentEnemy.smurfAnalysis.suspicionLevel === 'high_smurf'
-                    ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                    : currentEnemy.smurfAnalysis.suspicionLevel === 'high_suspicion'
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                    : currentEnemy.smurfAnalysis.suspicionLevel === 'suspicious'
-                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {currentEnemy.smurfAnalysis.suspicionLevel === 'clean' ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4" />
-                  )}
-                  <span className="text-xs font-black tracking-wider uppercase">
-                    {currentEnemy.smurfAnalysis.summaryHeadline ||
-                      (isRu ? 'ПОДОЗРИТЕЛЬНЫХ ПРИЗНАКОВ НЕ НАЙДЕНО' : 'CLEAN ACCOUNT')}
-                  </span>
-                </div>
-                <span className="text-[11px] font-bold opacity-80">
-                  {isRu
-                    ? `Шанс: ${currentEnemy.smurfAnalysis.smurfChancePercent}%`
-                    : `Chance: ${currentEnemy.smurfAnalysis.smurfChancePercent}%`}
-                </span>
-              </div>
+              {(() => {
+                const level = currentEnemy.smurfAnalysis.suspicionLevel;
+                let bg = 'rgba(16, 185, 129, 0.12)';
+                let border = 'rgba(16, 185, 129, 0.3)';
+                let color = '#10B981';
+
+                if (level === 'high_smurf') {
+                  bg = 'rgba(239, 68, 68, 0.14)';
+                  border = 'rgba(239, 68, 68, 0.35)';
+                  color = '#EF4444';
+                } else if (level === 'high_suspicion') {
+                  bg = 'rgba(245, 158, 11, 0.14)';
+                  border = 'rgba(245, 158, 11, 0.35)';
+                  color = '#F59E0B';
+                } else if (level === 'suspicious') {
+                  bg = 'rgba(250, 204, 21, 0.14)';
+                  border = 'rgba(250, 204, 21, 0.35)';
+                  color = '#FACC15';
+                }
+
+                return (
+                  <div
+                    style={{
+                      padding: '9px 14px',
+                      borderRadius: '12px',
+                      background: bg,
+                      border: `1px solid ${border}`,
+                      color: color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {level === 'clean' ? <CheckCircle size={15} /> : <AlertTriangle size={15} />}
+                      <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        {currentEnemy.smurfAnalysis.summaryHeadline || (isRu ? 'ПОДОЗРИТЕЛЬНЫХ ПРИЗНАКОВ НЕ НАЙДЕНО' : 'CLEAN ACCOUNT')}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.85 }}>
+                      {isRu ? `Шанс: ${currentEnemy.smurfAnalysis.smurfChancePercent}%` : `Chance: ${currentEnemy.smurfAnalysis.smurfChancePercent}%`}
+                    </span>
+                  </div>
+                );
+              })()}
 
               {/* Player Identity Row */}
-              <div className="flex items-center justify-between bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                <div className="flex items-center gap-3">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.07)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img
                     src={currentEnemy.avatar}
                     alt={currentEnemy.name}
-                    className="w-10 h-10 rounded-xl border border-white/10 object-cover"
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      objectFit: 'cover',
+                      border: '1px solid rgba(255, 255, 255, 0.15)'
+                    }}
                   />
                   <div>
-                    <h4 className="text-sm font-bold text-white leading-tight">
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
                       {currentEnemy.name}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
                       <button
                         onClick={() => copyToClipboard(currentEnemy.accountId)}
-                        className="text-[11px] text-slate-400 hover:text-cyan-400 transition flex items-center gap-1 font-mono"
-                        title="Копировать ID"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: 0,
+                          fontFamily: 'monospace'
+                        }}
                       >
                         <span>ID: {currentEnemy.accountId}</span>
                         {copiedId === currentEnemy.accountId ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check size={12} style={{ color: '#10B981' }} />
                         ) : (
-                          <Copy className="w-3 h-3 opacity-60" />
+                          <Copy size={12} style={{ opacity: 0.6 }} />
                         )}
                       </button>
                       {currentEnemy.profileUrl && (
@@ -342,118 +566,160 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                           href={currentEnemy.profileUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-slate-500 hover:text-white"
+                          style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'flex', alignItems: 'center' }}
                         >
-                          <ExternalLink className="w-3 h-3" />
+                          <ExternalLink size={11} />
                         </a>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-xs font-bold text-white">
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
                     {currentEnemy.rankName || (isRu ? 'Без ранга' : 'Unranked')}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">
-                    MMR: <span className="font-semibold text-slate-200">{currentEnemy.mmrDisplay}</span>
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                    MMR: <span style={{ color: '#E2E8F0', fontWeight: 600 }}>{currentEnemy.mmrDisplay}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Mode Winrates Grid (Ranked, Turbo, All Pick) */}
-              <div className="grid grid-cols-3 gap-2.5">
+              {/* Mode Winrates (Ranked, Turbo, All Pick) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                 {/* Ranked */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.025)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '12px',
+                    padding: '10px',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
                     Ranked
                   </div>
                   <div
-                    className={`text-base font-black mt-0.5 ${
-                      currentEnemy.rankedStats.winrate !== null &&
-                      currentEnemy.rankedStats.winrate >= 60
-                        ? 'text-amber-400'
-                        : 'text-white'
-                    }`}
+                    style={{
+                      fontSize: '17px',
+                      fontWeight: 900,
+                      marginTop: '2px',
+                      color:
+                        currentEnemy.rankedStats.winrate !== null && currentEnemy.rankedStats.winrate >= 60
+                          ? '#F59E0B'
+                          : '#fff'
+                    }}
                   >
                     {currentEnemy.rankedStats.formatted}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
                     {currentEnemy.rankedStats.detailText}
                   </div>
                 </div>
 
                 {/* Turbo */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.025)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '12px',
+                    padding: '10px',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
                     Turbo
                   </div>
                   <div
-                    className={`text-base font-black mt-0.5 ${
-                      currentEnemy.turboStats.winrate !== null &&
-                      currentEnemy.turboStats.winrate >= 60
-                        ? 'text-cyan-400'
-                        : 'text-white'
-                    }`}
+                    style={{
+                      fontSize: '17px',
+                      fontWeight: 900,
+                      marginTop: '2px',
+                      color:
+                        currentEnemy.turboStats.winrate !== null && currentEnemy.turboStats.winrate >= 60
+                          ? '#38BDF8'
+                          : '#fff'
+                    }}
                   >
                     {currentEnemy.turboStats.formatted}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
                     {currentEnemy.turboStats.detailText}
                   </div>
                 </div>
 
                 {/* All Pick */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.025)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '12px',
+                    padding: '10px',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)' }}>
                     All Pick
                   </div>
                   <div
-                    className={`text-base font-black mt-0.5 ${
-                      currentEnemy.allPickStats.winrate !== null &&
-                      currentEnemy.allPickStats.winrate >= 60
-                        ? 'text-emerald-400'
-                        : 'text-white'
-                    }`}
+                    style={{
+                      fontSize: '17px',
+                      fontWeight: 900,
+                      marginTop: '2px',
+                      color:
+                        currentEnemy.allPickStats.winrate !== null && currentEnemy.allPickStats.winrate >= 60
+                          ? '#10B981'
+                          : '#fff'
+                    }}
                   >
                     {currentEnemy.allPickStats.formatted}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.45)', marginTop: '2px' }}>
                     {currentEnemy.allPickStats.detailText}
                   </div>
                 </div>
               </div>
 
-              {/* Signatures (Top 3-4 heroes) */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              {/* Signature Heroes (3-4 items) */}
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.025)',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  borderRadius: '12px',
+                  padding: '12px'
+                }}
+              >
+                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)', marginBottom: '8px' }}>
                   {isRu ? 'Сигнатурные герои' : 'Signature Heroes'}
                 </div>
                 {currentEnemy.topHeroes && currentEnemy.topHeroes.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                     {currentEnemy.topHeroes.slice(0, 4).map((h) => (
                       <div
                         key={h.heroId}
-                        className="flex items-center gap-2 bg-black/20 p-1.5 rounded-lg border border-white/5"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'rgba(0, 0, 0, 0.25)',
+                          padding: '6px 8px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                        }}
                       >
                         <img
                           src={h.heroIcon}
                           alt={h.heroName}
-                          className="w-7 h-7 rounded object-cover border border-white/10"
+                          style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.1)' }}
                         />
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-200 truncate">
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {h.heroName}
                           </div>
-                          <div className="text-[10px] text-slate-400">
+                          <div style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.5)' }}>
                             {h.games} {isRu ? 'игр' : 'games'} ·{' '}
-                            <span
-                              className={
-                                h.winrate >= 65
-                                  ? 'text-amber-400 font-bold'
-                                  : 'text-slate-300 font-medium'
-                              }
-                            >
+                            <span style={{ color: h.winrate >= 65 ? '#F59E0B' : '#E2E8F0', fontWeight: h.winrate >= 65 ? 700 : 500 }}>
                               {h.winrate}% WR
                             </span>
                           </div>
@@ -462,45 +728,56 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 italic">
-                    {isRu ? 'Недостаточно игр на сигнатурах' : 'Not enough signature games'}
+                  <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' }}>
+                    {isRu ? 'Недостаточно сыгранных матчей на сигнатурах' : 'Not enough signature matches'}
                   </div>
                 )}
               </div>
 
-              {/* Why Suspicious? (Reasons list) */}
-              {currentEnemy.smurfAnalysis.reasons &&
-                currentEnemy.smurfAnalysis.reasons.length > 0 && (
-                  <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                      {isRu ? 'Причины подозрения' : 'Reasons for suspicion'}
-                    </div>
-                    <ul className="space-y-1">
-                      {currentEnemy.smurfAnalysis.reasons.map((r, i) => (
-                        <li
-                          key={i}
-                          className="text-xs text-slate-300 flex items-start gap-1.5"
-                        >
-                          <span className="text-amber-400 leading-none mt-1">•</span>
-                          <span>{r}</span>
-                        </li>
-                      ))}
-                    </ul>
+              {/* Reasons */}
+              {currentEnemy.smurfAnalysis.reasons && currentEnemy.smurfAnalysis.reasons.length > 0 && (
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.025)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '12px',
+                    padding: '12px'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.45)', marginBottom: '6px' }}>
+                    {isRu ? 'Причины подозрения' : 'Reasons for suspicion'}
                   </div>
-                )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {currentEnemy.smurfAnalysis.reasons.map((r, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: '#CBD5E1', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <span style={{ color: '#F59E0B', lineHeight: 1 }}>•</span>
+                        <span>{r}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              {/* Bottom Footer: Confidence & Details Toggle */}
-              <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 font-medium">
+              {/* Footer row: confidence & details toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '2px', fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.45)' }}>
                 <div>
                   {isRu ? 'Надёжность анализа:' : 'Analysis confidence:'}{' '}
-                  <span className="text-slate-300 font-bold">
+                  <span style={{ color: '#E2E8F0', fontWeight: 700 }}>
                     {currentEnemy.smurfAnalysis.confidenceScore}%
                   </span>
                 </div>
 
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38BDF8',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
                 >
                   {showDetails
                     ? (isRu ? 'Скрыть подробности' : 'Hide details')
@@ -508,60 +785,64 @@ export const LobbyScoutModal: React.FC<LobbyScoutModalProps> = ({
                 </button>
               </div>
 
-              {/* Expanded Details / Debug View */}
+              {/* Details / Debug collapsible */}
               {showDetails && (
-                <div className="mt-3 p-3 bg-black/40 rounded-xl border border-white/10 space-y-3 animate-in fade-in">
-                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                <div
+                  style={{
+                    marginTop: '4px',
+                    padding: '12px',
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#fff' }}>
                     <span>{isRu ? 'Последние матчи' : 'Recent Matches'}</span>
-                    <span className="text-[10px] text-slate-400">
+                    <span style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.4)' }}>
                       {currentEnemy.recentMatches.length} {isRu ? 'матчей' : 'matches'}
                     </span>
                   </div>
 
-                  <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                  <div style={{ maxHeight: '160px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {currentEnemy.recentMatches.slice(0, 10).map((m) => (
                       <div
                         key={m.matchId}
-                        className="flex items-center justify-between text-[11px] py-1 px-2 rounded bg-white/[0.02] border border-white/5"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: '11px',
+                          padding: '5px 8px',
+                          borderRadius: '6px',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          border: '1px solid rgba(255, 255, 255, 0.04)'
+                        }}
                       >
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={m.heroIcon}
-                            alt={m.heroName}
-                            className="w-4 h-4 rounded object-cover"
-                          />
-                          <span className="text-slate-300 font-medium">
-                            {m.heroName}
-                          </span>
-                          <span
-                            className={`font-bold ${
-                              m.won ? 'text-emerald-400' : 'text-red-400'
-                            }`}
-                          >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <img src={m.heroIcon} alt={m.heroName} style={{ width: '16px', height: '16px', borderRadius: '3px', objectFit: 'cover' }} />
+                          <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{m.heroName}</span>
+                          <span style={{ fontWeight: 700, color: m.won ? '#10B981' : '#EF4444' }}>
                             {m.won ? (isRu ? 'Победа' : 'Win') : (isRu ? 'Поражение' : 'Loss')}
                           </span>
                         </div>
-                        <div className="text-slate-400 font-mono">{m.kda}</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontFamily: 'monospace' }}>{m.kda}</div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Debug Mode details table */}
                   {debugMode && currentEnemy.debugMatches && (
-                    <div className="mt-3 pt-3 border-t border-white/10">
-                      <div className="text-[10px] font-mono text-cyan-400 uppercase font-bold mb-1.5 flex items-center gap-1">
-                        <Bug className="w-3 h-3" />
-                        <span>Debug Mode: Raw Match Metadata</span>
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                      <div style={{ fontSize: '10px', fontFamily: 'monospace', color: '#38BDF8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Bug size={11} />
+                        <span>Debug Mode: Raw Match Data</span>
                       </div>
-                      <div className="max-h-36 overflow-y-auto text-[10px] font-mono text-slate-400 space-y-1 bg-black/60 p-2 rounded border border-white/5">
+                      <div style={{ maxHeight: '120px', overflowY: 'auto', background: 'rgba(0, 0, 0, 0.6)', padding: '6px', borderRadius: '6px', fontSize: '10px', fontFamily: 'monospace', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {currentEnemy.debugMatches.map((dm) => (
-                          <div key={dm.matchId} className="border-b border-white/5 pb-0.5">
-                            ID: <span className="text-slate-200">{dm.matchId}</span> | GM:{' '}
-                            <span className="text-amber-400">{dm.gameMode}</span> | Lobby:{' '}
-                            <span className="text-cyan-400">{dm.lobbyType}</span> | Won:{' '}
-                            <span className={dm.won ? 'text-emerald-400' : 'text-red-400'}>
-                              {dm.won ? 'true' : 'false'}
-                            </span>
+                          <div key={dm.matchId} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '2px' }}>
+                            ID: <span style={{ color: '#fff' }}>{dm.matchId}</span> | GM: <span style={{ color: '#F59E0B' }}>{dm.gameMode}</span> | Lobby: <span style={{ color: '#38BDF8' }}>{dm.lobbyType}</span> | Won: <span style={{ color: dm.won ? '#10B981' : '#EF4444' }}>{dm.won ? 'true' : 'false'}</span>
                           </div>
                         ))}
                       </div>
