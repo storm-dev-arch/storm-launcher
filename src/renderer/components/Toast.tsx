@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export interface ToastMessage {
   id: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'warning' | 'progress';
   title: string;
   message?: string;
   duration?: number;
@@ -18,14 +18,24 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
   useEffect(() => {
     const timer = setTimeout(() => {
       onDismiss(toast.id);
-    }, toast.duration || 3500);
+    }, toast.duration || (toast.type === 'progress' ? 3000 : 3500));
 
     return () => clearTimeout(timer);
-  }, [toast.id, toast.duration, onDismiss]);
+  }, [toast.id, toast.duration, toast.type, onDismiss]);
+
+  const typeConfig = {
+    success: { icon: CheckCircle2, color: '#10B981', border: 'rgba(16, 185, 129, 0.35)', spin: false },
+    error: { icon: AlertCircle, color: '#F43F5E', border: 'rgba(244, 63, 94, 0.35)', spin: false },
+    info: { icon: Info, color: '#FFFFFF', border: 'rgba(255, 255, 255, 0.25)', spin: false },
+    warning: { icon: AlertTriangle, color: '#F59E0B', border: 'rgba(245, 158, 11, 0.35)', spin: false },
+    progress: { icon: RefreshCw, color: '#FFFFFF', border: 'rgba(255, 255, 255, 0.3)', spin: true }
+  };
+  const config = typeConfig[toast.type];
+  const Icon = config.icon;
 
   return (
     <div
-      className="fade-in"
+      className="fade-in glass-modal"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -33,25 +43,21 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
         gap: '12px',
         minWidth: '280px',
         maxWidth: '380px',
-        background: 'rgba(12, 12, 16, 0.95)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border: '1px solid var(--border-highlight)',
-        borderRadius: '10px',
         padding: '12px 16px',
-        boxShadow: '0 12px 36px rgba(0,0,0,0.65)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        background: 'var(--bg-glass)',
+        border: `1px solid ${config.border}`,
+        borderRadius: '12px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.65)'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {toast.type === 'success' && <CheckCircle2 size={16} style={{ color: '#10B981', flexShrink: 0 }} />}
-        {toast.type === 'error' && <AlertCircle size={16} style={{ color: '#F43F5E', flexShrink: 0 }} />}
-        {toast.type === 'info' && <Info size={16} style={{ color: '#38BDF8', flexShrink: 0 }} />}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Icon size={18} className={config.spin ? 'spin' : ''} style={{ color: config.color, flexShrink: 0 }} />
         <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{toast.title}</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{toast.title}</div>
           {toast.message && (
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
               {toast.message}
             </div>
           )}
@@ -77,17 +83,27 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
         <X size={14} />
       </button>
 
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          height: '2px',
-          background: toast.type === 'success' ? '#10B981' : toast.type === 'error' ? '#F43F5E' : 'var(--accent-primary)',
-          opacity: 0.8,
-          animation: `shrinkLine ${toast.duration || 3500}ms linear forwards`
-        }}
-      />
+      {toast.type === 'progress' ? (
+        <div
+          className="glass-progress-bar"
+          style={{
+            animation: `progressBarFill ${toast.duration || 3000}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            height: '2px',
+            background: config.color,
+            boxShadow: `0 0 8px ${config.color}`,
+            opacity: 0.8,
+            animation: `shrinkLine ${toast.duration || 3500}ms linear forwards`
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,68 +1,87 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { StormPlayAPI, Game, CandidateExe, LauncherSettings, ScannerProgress, SessionRecord, CollectionRecord } from '../shared/types';
 
+const safeInvoke = async (channel: string, ...args: any[]) => {
+  try {
+    return await ipcRenderer.invoke(channel, ...args);
+  } catch (err: any) {
+    console.error(`IPC Error on ${channel}:`, err);
+    throw new Error(err.message || 'Unknown IPC Error');
+  }
+};
+
 const api: StormPlayAPI = {
   games: {
-    getAll: () => ipcRenderer.invoke('play:games:getAll'),
-    getById: (id: string) => ipcRenderer.invoke('play:games:getById', id),
-    toggleFavorite: (id: string) => ipcRenderer.invoke('play:games:toggleFavorite', id),
-    addCustom: (game: Partial<Game>) => ipcRenderer.invoke('play:games:addCustom', game),
-    update: (id: string, partial: Partial<Game>) => ipcRenderer.invoke('play:games:update', id, partial),
-    delete: (id: string) => ipcRenderer.invoke('play:games:delete', id),
-    launch: (id: string) => ipcRenderer.invoke('play:games:launch', id),
-    openInstallFolder: (id: string) => ipcRenderer.invoke('play:games:openInstallFolder', id),
-    createDesktopShortcut: (id: string) => ipcRenderer.invoke('play:games:createDesktopShortcut', id)
+    getAll: () => safeInvoke('play:games:getAll'),
+    getById: (id: string) => safeInvoke('play:games:getById', id),
+    toggleFavorite: (id: string) => safeInvoke('play:games:toggleFavorite', id),
+    addCustom: (game: Partial<Game>) => safeInvoke('play:games:addCustom', game),
+    update: (id: string, partial: Partial<Game>) => safeInvoke('play:games:update', id, partial),
+    delete: (id: string) => safeInvoke('play:games:delete', id),
+    launch: (id: string) => safeInvoke('play:games:launch', id),
+    openInstallFolder: (id: string) => safeInvoke('play:games:openInstallFolder', id),
+    createDesktopShortcut: (id: string) => safeInvoke('play:games:createDesktopShortcut', id)
   },
   scanner: {
-    syncAll: (force?: boolean) => ipcRenderer.invoke('play:scanner:syncAll', force),
-    scanSteam: (force?: boolean) => ipcRenderer.invoke('play:scanner:scanSteam', force),
-    scanMultiLaunchers: () => ipcRenderer.invoke('play:scanner:scanMultiLaunchers'),
-    deepScanDisks: () => ipcRenderer.invoke('play:scanner:deepScanDisks'),
-    scanFolderForExecutables: (folderPath: string) => ipcRenderer.invoke('play:scanner:scanFolderForExecutables', folderPath),
-    selectFolder: () => ipcRenderer.invoke('play:scanner:selectFolder'),
-    selectFile: (filters) => ipcRenderer.invoke('play:scanner:selectFile', filters),
-    getSteamStatus: () => ipcRenderer.invoke('play:scanner:getSteamStatus')
+    syncAll: (force?: boolean) => safeInvoke('play:scanner:syncAll', force),
+    scanSteam: (force?: boolean) => safeInvoke('play:scanner:scanSteam', force),
+    scanMultiLaunchers: () => safeInvoke('play:scanner:scanMultiLaunchers'),
+    deepScanDisks: () => safeInvoke('play:scanner:deepScanDisks'),
+    cancelScanDisks: () => safeInvoke('play:scanner:cancelScanDisks'),
+    scanFolderForExecutables: (folderPath: string) => safeInvoke('play:scanner:scanFolderForExecutables', folderPath),
+    selectFolder: () => safeInvoke('play:scanner:selectFolder'),
+    selectFile: (filters) => safeInvoke('play:scanner:selectFile', filters),
+    getSteamStatus: () => safeInvoke('play:scanner:getSteamStatus')
   },
   steamGrid: {
-    search: (gameName: string, type?: 'cover' | 'hero' | 'logo') => ipcRenderer.invoke('play:steamgrid:search', gameName, type),
-    applyArtwork: (gameId: string, type: 'cover' | 'hero' | 'logo', url: string) => ipcRenderer.invoke('play:steamgrid:apply', gameId, type, url)
+    search: (gameName: string, type?: 'cover' | 'hero' | 'logo') => safeInvoke('play:steamgrid:search', gameName, type),
+    applyArtwork: (gameId: string, type: 'cover' | 'hero' | 'logo', url: string) => safeInvoke('play:steamgrid:apply', gameId, type, url)
   },
   achievements: {
-    get: (steamAppId: number) => ipcRenderer.invoke('play:achievements:get', steamAppId)
+    get: (steamAppId: number) => safeInvoke('play:achievements:get', steamAppId)
   },
   screenshots: {
-    get: (steamAppId: number) => ipcRenderer.invoke('play:screenshots:get', steamAppId),
-    openFolder: (steamAppId: number) => ipcRenderer.invoke('play:screenshots:open', steamAppId)
+    get: (steamAppId: number) => safeInvoke('play:screenshots:get', steamAppId),
+    openFolder: (steamAppId: number) => safeInvoke('play:screenshots:open', steamAppId)
   },
   discord: {
-    updateStatus: (activity) => ipcRenderer.invoke('play:discord:updateStatus', activity)
+    updateStatus: (activity) => safeInvoke('play:discord:updateStatus', activity),
+    setStatus: (statusType: 'menu' | 'searching' | 'settings' | 'launching' | 'playing', extra?: any) =>
+      safeInvoke('play:discord:setStatus', statusType, extra)
   },
   gsi: {
-    getStats: () => ipcRenderer.invoke('play:gsi:getStats')
+    getStats: () => safeInvoke('play:gsi:getStats')
   },
   sessions: {
-    getAll: () => ipcRenderer.invoke('play:sessions:getAll'),
-    getStats: () => ipcRenderer.invoke('play:sessions:getStats')
+    getAll: () => safeInvoke('play:sessions:getAll'),
+    getStats: () => safeInvoke('play:sessions:getStats'),
+    getSessionsByGame: (gameId: string, limit?: number) => safeInvoke('play:stats:getSessionsByGame', gameId, limit)
+  },
+  stats: {
+    getSessionsByGame: (gameId: string, limit?: number) => safeInvoke('play:stats:getSessionsByGame', gameId, limit)
   },
   collections: {
-    getAll: () => ipcRenderer.invoke('play:collections:getAll'),
-    create: (name: string, color?: string) => ipcRenderer.invoke('play:collections:create', name, color),
-    update: (id: string, partial: Partial<CollectionRecord>) => ipcRenderer.invoke('play:collections:update', id, partial),
-    delete: (id: string) => ipcRenderer.invoke('play:collections:delete', id),
-    addGame: (collectionId: string, gameId: string) => ipcRenderer.invoke('play:collections:addGame', collectionId, gameId),
-    removeGame: (collectionId: string, gameId: string) => ipcRenderer.invoke('play:collections:removeGame', collectionId, gameId)
+    getAll: () => safeInvoke('play:collections:getAll'),
+    create: (name: string, color?: string) => safeInvoke('play:collections:create', name, color),
+    update: (id: string, partial: Partial<CollectionRecord>) => safeInvoke('play:collections:update', id, partial),
+    delete: (id: string) => safeInvoke('play:collections:delete', id),
+    addGame: (collectionId: string, gameId: string) => safeInvoke('play:collections:addGame', collectionId, gameId),
+    removeGame: (collectionId: string, gameId: string) => safeInvoke('play:collections:removeGame', collectionId, gameId)
   },
   settings: {
-    get: () => ipcRenderer.invoke('play:settings:get'),
-    update: (partial: Partial<LauncherSettings>) => ipcRenderer.invoke('play:settings:update', partial)
+    get: () => safeInvoke('play:settings:get'),
+    update: (partial: Partial<LauncherSettings>) => safeInvoke('play:settings:update', partial)
   },
   system: {
     minimize: () => ipcRenderer.send('play:system:minimize'),
     maximize: () => ipcRenderer.send('play:system:maximize'),
     close: () => ipcRenderer.send('play:system:close'),
-    isMaximized: () => ipcRenderer.invoke('play:system:isMaximized'),
-    openExternal: (url: string) => ipcRenderer.invoke('play:system:openExternal', url),
-    getPCSpecs: () => ipcRenderer.invoke('play:system:getPCSpecs')
+    showMain: () => ipcRenderer.send('play:system:showMain'),
+    toggleMiniMode: () => ipcRenderer.send('play:system:toggleMiniMode'),
+    isMaximized: () => safeInvoke('play:system:isMaximized'),
+    openExternal: (url: string) => safeInvoke('play:system:openExternal', url),
+    getPCSpecs: () => safeInvoke('play:system:getPCSpecs'),
+    clearCache: () => safeInvoke('play:system:clearCache')
   },
   events: {
     onGameLaunched: (callback) => {

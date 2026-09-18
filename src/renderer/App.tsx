@@ -5,7 +5,6 @@ import { Sidebar, PageId } from './components/Sidebar';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import { GameContextMenu } from './components/GameContextMenu';
 import { CommandPalette } from './components/CommandPalette';
-import { MiniModeModal } from './components/MiniModeModal';
 import { AddGameModal } from './components/AddGameModal';
 import { ScanGamesModal } from './components/ScanGamesModal';
 import { WhatShouldIPlayModal } from './components/WhatShouldIPlayModal';
@@ -14,15 +13,36 @@ import { SteamGridModal } from './components/SteamGridModal';
 import { soundEngine } from './audio/soundEngine';
 import { translations, Language } from './i18n/translations';
 
+import { SplashScreen } from './components/SplashScreen';
 import { OverviewPage } from './pages/OverviewPage';
-import { LibraryPage } from './pages/LibraryPage';
-import { GameDetailPage } from './pages/GameDetailPage';
-import { CollectionsPage } from './pages/CollectionsPage';
-import { StatisticsPage } from './pages/StatisticsPage';
-import { SettingsPage } from './pages/SettingsPage';
+const LibraryPage = React.lazy(() => import('./pages/LibraryPage').then(m => ({ default: m.LibraryPage })));
+const GameDetailPage = React.lazy(() => import('./pages/GameDetailPage').then(m => ({ default: m.GameDetailPage })));
+const CollectionsPage = React.lazy(() => import('./pages/CollectionsPage').then(m => ({ default: m.CollectionsPage })));
+const StatisticsPage = React.lazy(() => import('./pages/StatisticsPage').then(m => ({ default: m.StatisticsPage })));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 import { OnboardingModal } from './pages/OnboardingModal';
 
+export const applyGlassStyleToDoc = (s: Partial<LauncherSettings>) => {
+  const blur = s.blurAmount ?? 24;
+  const cardOpacity = s.cardOpacity ?? 0.65;
+  const effectiveBlur = s.lowPerformanceMode ? 0 : Math.max(0, Math.min(60, blur));
+
+  document.documentElement.style.setProperty('--glass-blur', `${effectiveBlur}px`);
+  document.documentElement.style.setProperty('--card-blur', `${Math.round(effectiveBlur * 0.7)}px`);
+
+  const currentTheme = s.theme || document.documentElement.getAttribute('data-theme') || 'dark';
+  const isLight = currentTheme === 'light' || currentTheme === 'white';
+  if (isLight) {
+    document.documentElement.style.setProperty('--bg-card', `rgba(255, 255, 255, ${cardOpacity})`);
+    document.documentElement.style.setProperty('--bg-glass', `rgba(255, 255, 255, ${Math.max(0.15, cardOpacity * 0.9)})`);
+  } else {
+    document.documentElement.style.setProperty('--bg-card', `rgba(14, 14, 18, ${cardOpacity})`);
+    document.documentElement.style.setProperty('--bg-glass', `rgba(18, 18, 22, ${Math.max(0.15, cardOpacity * 0.9)})`);
+  }
+};
+
 export const App: React.FC = () => {
+  const [splashDone, setSplashDone] = useState(false);
   const [games, setGames] = useState<Game[]>([]);
   const [collections, setCollections] = useState<CollectionRecord[]>([]);
   const [settings, setSettings] = useState<LauncherSettings | null>(null);
@@ -37,7 +57,6 @@ export const App: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const [isCmdOpen, setIsCmdOpen] = useState(false);
-  const [isMiniOpen, setIsMiniOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isScanOpen, setIsScanOpen] = useState(false);
   const [isRandomOpen, setIsRandomOpen] = useState(false);
@@ -111,6 +130,7 @@ export const App: React.FC = () => {
           document.body.setAttribute('data-theme', appSettings.theme);
           document.body.className = `theme-${appSettings.theme}`;
         }
+        applyGlassStyleToDoc(appSettings);
 
         if (!appSettings.firstLaunchDone) {
           setIsOnboardingOpen(true);
@@ -123,11 +143,21 @@ export const App: React.FC = () => {
     init();
   }, []);
 
+  useEffect(() => {
+    if (settings) {
+      applyGlassStyleToDoc(settings);
+    }
+  }, [settings?.blurAmount, settings?.cardOpacity, settings?.lowPerformanceMode, settings?.theme]);
+
   const handleUpdateTheme = (themeName: string) => {
-    setSettings(prev => prev ? { ...prev, theme: themeName as LauncherSettings['theme'] } : null);
     document.documentElement.setAttribute('data-theme', themeName);
     document.body.setAttribute('data-theme', themeName);
     document.body.className = `theme-${themeName}`;
+    setSettings(prev => {
+      const next = prev ? { ...prev, theme: themeName as LauncherSettings['theme'] } : null;
+      if (next) applyGlassStyleToDoc(next);
+      return next;
+    });
   };
 
   const handleToggleLanguage = async () => {
@@ -184,14 +214,12 @@ export const App: React.FC = () => {
         setIsCmdOpen(prev => !prev);
       } else if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
-        setIsMiniOpen(prev => !prev);
+        window.stormPlay.system.toggleMiniMode();
       } else if (e.code === 'Escape') {
         if (contextMenu) {
           setContextMenu(null);
         } else if (isCmdOpen) {
           setIsCmdOpen(false);
-        } else if (isMiniOpen) {
-          setIsMiniOpen(false);
         } else if (isAddOpen) {
           setIsAddOpen(false);
         } else if (isScanOpen) {
@@ -206,10 +234,23 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [contextMenu, isCmdOpen, isMiniOpen, isAddOpen, isScanOpen, isRandomOpen, selectedGame]);
+  }, [contextMenu, isCmdOpen, isAddOpen, isScanOpen, isRandomOpen, selectedGame]);
+
+  useEffect(() => {
+    if (selectedGame) {
+      window.stormPlay.discord.setStatus('searching', { name: selectedGame.name });
+    } else if (activePage === 'overview') {
+      window.stormPlay.discord.setStatus('menu');
+    } else if (activePage === 'settings') {
+      window.stormPlay.discord.setStatus('settings');
+    } else {
+      window.stormPlay.discord.setStatus('searching');
+    }
+  }, [activePage, selectedGame]);
 
   const handlePlayGame = async (game: Game) => {
     soundEngine.playLaunch();
+    window.stormPlay.discord.setStatus('launching', { name: game.name });
     try {
       const res = await window.stormPlay.games.launch(game.id);
       if (!res.success) {
@@ -217,6 +258,16 @@ export const App: React.FC = () => {
       }
     } catch (err: any) {
       addToast('error', 'Launch Error', err.message || 'Unknown error occurred');
+    }
+  };
+
+  const handleLaunchAndMinimize = async (game: Game) => {
+    addToast('progress', language === 'ru' ? 'Запуск игры...' : 'Launching game...', game.name, 3500);
+    await handlePlayGame(game);
+    try {
+      await window.stormPlay.system.minimize();
+    } catch (err) {
+      console.error('Minimize failed:', err);
     }
   };
 
@@ -312,6 +363,19 @@ export const App: React.FC = () => {
       addToast('success', t.gameAdded, added.name);
     } catch (err: any) {
       addToast('error', 'Add Game Failed', err.message);
+    }
+  };
+
+  const handleBatchImportCustomGames = async (items: Partial<Game>[]) => {
+    try {
+      for (const item of items) {
+        await window.stormPlay.games.addCustom(item);
+      }
+      await refreshGames();
+      addToast('success', language === 'ru' ? 'Игры импортированы' : 'Games Imported', `${items.length} ${language === 'ru' ? 'игр добавлено' : 'games added'}`);
+      setIsAddOpen(false);
+    } catch (err: any) {
+      addToast('error', 'Import Failed', err.message);
     }
   };
 
@@ -416,16 +480,18 @@ export const App: React.FC = () => {
         if (contextMenu) setContextMenu(null);
       }}
     >
+      {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
+      
       <BackgroundShader
-        theme={settings?.theme || 'obsidian'}
-        active={settings?.dynamicBackground !== false}
+        theme={settings?.theme || 'dark'}
+        active={settings?.dynamicBackground !== false && !settings?.lowPerformanceMode}
       />
 
       <TitleBar
         steamStatus={steamStatus}
         scanProgress={scanProgress}
         onOpenCommandPalette={() => setIsCmdOpen(true)}
-        onOpenMiniMode={() => setIsMiniOpen(true)}
+        onOpenMiniMode={() => window.stormPlay.system.toggleMiniMode()}
         onScanSteam={handleScanSteam}
         gameCount={games.length}
         language={language}
@@ -462,67 +528,72 @@ export const App: React.FC = () => {
             background: 'transparent'
           }}
         >
-          {selectedGame ? (
-            <GameDetailPage
-              game={selectedGame}
-              collections={collections}
-              onBack={() => setSelectedGame(null)}
-              onPlay={handlePlayGame}
-              onToggleFavorite={handleToggleFavorite}
-              onOpenFolder={handleOpenFolder}
-              onCreateShortcut={handleCreateShortcut}
-              onAddToCollection={handleAddToCollection}
-              onRemoveFromCollection={handleRemoveFromCollection}
-              onGameUpdated={(updated) => {
-                setGames(prev => prev.map(g => g.id === updated.id ? updated : g));
-                setSelectedGame(updated);
-              }}
-              language={language}
-            />
-          ) : activePage === 'overview' ? (
-            <OverviewPage
-              games={games}
-              onPlay={handlePlayGame}
-              onOpenDetails={(game) => setSelectedGame(game)}
-              onToggleFavorite={handleToggleFavorite}
-              onContextMenu={handleContextMenu}
-              onNavigate={(page) => setActivePage(page)}
-              language={language}
-            />
-          ) : isLibraryView ? (
-            <LibraryPage
-              games={games}
-              initialFilter={activePage === 'library' ? 'all' : activePage}
-              onPlay={handlePlayGame}
-              onOpenDetails={(game) => setSelectedGame(game)}
-              onToggleFavorite={handleToggleFavorite}
-              onContextMenu={handleContextMenu}
-              onAddCustomGame={() => setIsAddOpen(true)}
-              onScanSteam={handleScanSteam}
-              onSyncAll={handleScanSteam}
-              onScanFolder={() => setIsScanOpen(true)}
-              language={language}
-            />
-          ) : activePage === 'collections' ? (
-            <CollectionsPage
-              collections={collections}
-              games={games}
-              onCreateCollection={handleCreateCollection}
-              onDeleteCollection={handleDeleteCollection}
-              onOpenGame={(game) => setSelectedGame(game)}
-              language={language}
-            />
-          ) : activePage === 'statistics' ? (
-            <StatisticsPage language={language} />
-          ) : activePage === 'settings' ? (
-            <SettingsPage
-              onScanSteam={handleScanSteam}
-              onScanFolder={() => setIsScanOpen(true)}
-              language={language}
-              onUpdateLanguage={handleUpdateLanguage}
-              onUpdateTheme={handleUpdateTheme}
-            />
-          ) : null}
+          <React.Suspense fallback={<div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: 'var(--text-muted)' }}>Loading...</span></div>}>
+            <div key={selectedGame ? 'details' : activePage} className="page-transition" style={{ height: '100%' }}>
+              {selectedGame ? (
+                <GameDetailPage
+                  game={selectedGame}
+                  collections={collections}
+                  onBack={() => setSelectedGame(null)}
+                  onPlay={handlePlayGame}
+                  onToggleFavorite={handleToggleFavorite}
+                  onOpenFolder={handleOpenFolder}
+                  onCreateShortcut={handleCreateShortcut}
+                  onAddToCollection={handleAddToCollection}
+                  onRemoveFromCollection={handleRemoveFromCollection}
+                  onGameUpdated={(updated) => {
+                    setGames(prev => prev.map(g => g.id === updated.id ? updated : g));
+                    setSelectedGame(prev => (prev && prev.id === updated.id ? updated : prev));
+                  }}
+                  onToast={addToast}
+                  language={language}
+                />
+              ) : activePage === 'overview' ? (
+                <OverviewPage
+                  games={games}
+                  onPlay={handlePlayGame}
+                  onOpenDetails={(game) => setSelectedGame(game)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onContextMenu={handleContextMenu}
+                  onNavigate={(page) => setActivePage(page)}
+                  language={language}
+                />
+              ) : isLibraryView ? (
+                <LibraryPage
+                  games={games}
+                  initialFilter={activePage === 'library' ? 'all' : activePage}
+                  onPlay={handlePlayGame}
+                  onOpenDetails={(game) => setSelectedGame(game)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onContextMenu={handleContextMenu}
+                  onAddCustomGame={() => setIsAddOpen(true)}
+                  onScanSteam={handleScanSteam}
+                  onSyncAll={handleScanSteam}
+                  onScanFolder={() => setIsScanOpen(true)}
+                  language={language}
+                />
+              ) : activePage === 'collections' ? (
+                <CollectionsPage
+                  collections={collections}
+                  games={games}
+                  onCreateCollection={handleCreateCollection}
+                  onDeleteCollection={handleDeleteCollection}
+                  onOpenGame={(game) => setSelectedGame(game)}
+                  language={language}
+                />
+              ) : activePage === 'statistics' ? (
+                <StatisticsPage language={language} />
+              ) : activePage === 'settings' ? (
+                <SettingsPage
+                  onScanSteam={handleScanSteam}
+                  onScanFolder={() => setIsScanOpen(true)}
+                  language={language}
+                  onUpdateLanguage={handleUpdateLanguage}
+                  onUpdateTheme={handleUpdateTheme}
+                />
+              ) : null}
+            </div>
+          </React.Suspense>
         </main>
       </div>
 
@@ -534,6 +605,7 @@ export const App: React.FC = () => {
           collections={collections}
           onClose={() => setContextMenu(null)}
           onPlay={handlePlayGame}
+          onLaunchAndMinimize={handleLaunchAndMinimize}
           onToggleFavorite={handleToggleFavorite}
           onOpenFolder={handleOpenFolder}
           onCreateShortcut={handleCreateShortcut}
@@ -571,21 +643,11 @@ export const App: React.FC = () => {
         }}
       />
 
-      <MiniModeModal
-        isOpen={isMiniOpen}
-        games={games}
-        onClose={() => setIsMiniOpen(false)}
-        onPlay={(game) => {
-          handlePlayGame(game);
-          setIsMiniOpen(false);
-        }}
-        onOpenFullApp={() => setIsMiniOpen(false)}
-      />
-
       <AddGameModal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSaveGame={handleSaveCustomGame}
+        onBatchSave={handleBatchImportCustomGames}
       />
 
       <ScanGamesModal

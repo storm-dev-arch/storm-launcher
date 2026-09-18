@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Play, Star, FolderOpen, ExternalLink, Trash2, Tag, Compass, Sparkles, Share2 } from 'lucide-react';
+import { Play, Star, FolderOpen, ExternalLink, Trash2, Tag, Compass, Sparkles, Share2, Minimize2 } from 'lucide-react';
 import type { Game, CollectionRecord } from '../../shared/types';
 import { translations, Language } from '../i18n/translations';
 
@@ -10,6 +10,7 @@ interface GameContextMenuProps {
   collections: CollectionRecord[];
   onClose: () => void;
   onPlay: (game: Game) => void;
+  onLaunchAndMinimize?: (game: Game) => void;
   onToggleFavorite: (id: string) => void;
   onOpenFolder: (id: string) => void;
   onCreateShortcut: (id: string) => void;
@@ -26,6 +27,7 @@ export const GameContextMenu: React.FC<GameContextMenuProps> = ({
   collections,
   onClose,
   onPlay,
+  onLaunchAndMinimize,
   onToggleFavorite,
   onOpenFolder,
   onCreateShortcut,
@@ -59,13 +61,11 @@ export const GameContextMenu: React.FC<GameContextMenuProps> = ({
         left: `${posX}px`,
         top: `${posY}px`,
         width: '220px',
-        background: 'rgba(12, 12, 16, 0.96)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
+        background: 'rgba(12, 12, 16, 0.98)',
         border: '1px solid var(--border-highlight)',
         borderRadius: '12px',
         padding: '6px',
-        boxShadow: '0 16px 40px rgba(0,0,0,0.8)',
+        boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
         zIndex: 2500,
         userSelect: 'none'
       }}
@@ -104,6 +104,41 @@ export const GameContextMenu: React.FC<GameContextMenuProps> = ({
       >
         <Play size={14} fill="#fff" />
         <span>{t.play}</span>
+      </button>
+
+      <button
+        onClick={() => {
+          if (onLaunchAndMinimize) {
+            onLaunchAndMinimize(game);
+          } else {
+            onPlay(game);
+            try {
+              window.stormPlay.system.minimize();
+            } catch (err) {
+              console.error(err);
+            }
+          }
+          onClose();
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          width: '100%',
+          padding: '8px 10px',
+          borderRadius: '6px',
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-primary)',
+          fontSize: '12px',
+          cursor: 'pointer',
+          textAlign: 'left'
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+      >
+        <Minimize2 size={14} style={{ color: 'var(--text-secondary)' }} />
+        <span>{language === 'ru' ? 'Запустить и свернуть в трей' : 'Launch & minimize to tray'}</span>
       </button>
 
       <button

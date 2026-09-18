@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, globalShortcut } from 'electron';
 import path from 'path';
 import os from 'os';
 import { db } from './db';
@@ -18,6 +18,63 @@ import { gsiService } from './gsiService';
 import { processWatcher } from './processWatcher';
 
 let mainWindow: BrowserWindow | null = null;
+let miniWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
+
+function createMiniWindow() {
+  miniWindow = new BrowserWindow({
+    width: 360,
+    height: 480,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    focusable: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  
+  if (process.env.VITE_DEV_SERVER_URL) {
+    miniWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#mini`);
+  } else {
+    miniWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: 'mini' });
+  }
+
+  miniWindow.on('blur', () => {
+    if (miniWindow && !miniWindow.isDestroyed()) {
+      miniWindow.setFocusable(false);
+    }
+  });
+  
+  miniWindow.on('focus', () => {
+    if (miniWindow && !miniWindow.isDestroyed()) {
+      miniWindow.setFocusable(true);
+    }
+  });
+
+  miniWindow.on('closed', () => {
+    miniWindow = null;
+  });
+}
+
+function toggleMiniWindow() {
+  if (!miniWindow || miniWindow.isDestroyed()) {
+    createMiniWindow();
+  }
+  if (miniWindow && !miniWindow.isDestroyed()) {
+    if (miniWindow.isVisible()) {
+      miniWindow.hide();
+    } else {
+      miniWindow.setFocusable(true);
+      miniWindow.show();
+    }
+  }
+}
 
 function createWindow() {
   const settings = db.getSettings();
@@ -35,7 +92,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      webSecurity: process.env.NODE_ENV === 'production',
+      backgroundThrottling: false
     }
   });
 
@@ -50,9 +109,7 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
 
-    if (settings.discordRPC !== false) {
-      discordRPC.setIdle(db.getGames().length);
-    } else {
+    if (settings.discordRPC === false) {
       discordRPC.setEnabled(false);
     }
 
@@ -63,13 +120,24 @@ function createWindow() {
       gsiService.installGSIConfigs(steamStatus.libraries);
     }
 
+    processWatcher.setWindow(mainWindow);
     processWatcher.start();
+
+    setTimeout(() => {
+      if (!gsiService.isLive() && !processWatcher.isGameRunning() && settings.discordRPC !== false) {
+        discordRPC.setIdle(db.getGames().length);
+      }
+    }, 1500);
 
     steamScanner.scan((progress) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('play:scanner:progress', progress);
       }
     }).then(async () => {
+      const updatedStatus = steamScanner.getSteamStatus();
+      if (updatedStatus.libraries && updatedStatus.libraries.length > 0) {
+        gsiService.installGSIConfigs(updatedStatus.libraries);
+      }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('play:games:updated', db.getGames());
       }
@@ -87,8 +155,23 @@ function createWindow() {
     });
   });
 
+  mainWindow.on('close', (event) => {
+    const currentSettings = db.getSettings();
+    if (!isQuitting && currentSettings.minimizeToTray !== false) {
+      event.preventDefault();
+      mainWindow?.hide();
+      if (miniWindow && !miniWindow.isDestroyed()) {
+        miniWindow.hide();
+      }
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
+    if (miniWindow && !miniWindow.isDestroyed()) {
+      miniWindow.close();
+    }
+    miniWindow = null;
   });
 }
 
@@ -99,11 +182,50 @@ if (!gotTheLock) {
   app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
+      if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    createWindow();
+    createMiniWindow();
+    
+    globalShortcut.register('CommandOrControl+Space', () => {
+      toggleMiniWindow();
+    });
+    
+    tray = new Tray(path.join(__dirname, '../build/icon.ico'));
+    const updateMenu = () => {
+      const recentGames = db.getGames().sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0)).slice(0, 5);
+      const recentTemplate = recentGames.map(g => ({
+        label: g.name,
+        click: () => {
+          gameLauncher.launchGame(g.id, mainWindow);
+        }
+      }));
+      
+      const contextMenu = Menu.buildFromTemplate([
+        { label: 'Open Storm Launcher', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
+        { type: 'separator' },
+        ...(recentTemplate.length > 0 ? [{ label: 'Recent Games', enabled: false }, ...recentTemplate, { type: 'separator' }] as any[] : []),
+        { label: 'Quit', click: () => {
+          isQuitting = true;
+          app.quit();
+        }}
+      ]);
+      tray?.setContextMenu(contextMenu);
+    };
+    
+    updateMenu();
+    tray.setToolTip('Storm Launcher');
+    tray.on('click', () => {
+      if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+  });
 }
 
 app.on('window-all-closed', () => {
@@ -113,6 +235,7 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
@@ -239,6 +362,9 @@ ipcMain.handle('play:scanner:deepScanDisks', async () => {
     }
   });
 });
+ipcMain.handle('play:scanner:cancelScanDisks', () => {
+  deepDiskScanner.cancel();
+});
 
 ipcMain.handle('play:scanner:scanFolderForExecutables', (_, folderPath) => customScanner.scanFolder(folderPath));
 ipcMain.handle('play:scanner:selectFolder', async () => {
@@ -270,10 +396,33 @@ ipcMain.handle('play:discord:updateStatus', (_, activity) => {
   discordRPC.setActivity(activity);
   return true;
 });
+ipcMain.handle('play:discord:setStatus', (_, statusType: string, extra?: any) => {
+  if (['menu', 'searching', 'settings'].includes(statusType)) {
+    if (gsiService.isLive() || processWatcher.isGameRunning()) {
+      return false;
+    }
+  }
+
+  const gameCount = db.getGames().length;
+  if (statusType === 'menu') {
+    discordRPC.setInMenu(gameCount);
+  } else if (statusType === 'searching') {
+    discordRPC.setSearchingGame(gameCount);
+  } else if (statusType === 'settings') {
+    discordRPC.setInSettings();
+  } else if (statusType === 'launching') {
+    discordRPC.setLaunching(extra?.name || extra || 'Game');
+  } else if (statusType === 'playing') {
+    discordRPC.setInGame(extra?.name || 'Game', extra?.startTime || Date.now(), extra?.coverUrl);
+  }
+  return true;
+});
 ipcMain.handle('play:gsi:getStats', () => gsiService.getStats());
 
 ipcMain.handle('play:sessions:getAll', () => db.getSessions());
 ipcMain.handle('play:sessions:getStats', () => db.getStats());
+ipcMain.handle('play:sessions:getSessionsByGame', (_, gameId, limit) => db.getSessionsByGame(gameId, limit || 20));
+ipcMain.handle('play:stats:getSessionsByGame', (_, gameId, limit) => db.getSessionsByGame(gameId, limit || 20));
 
 ipcMain.handle('play:collections:getAll', () => db.getCollections());
 ipcMain.handle('play:collections:create', (_, name, color) => {
@@ -330,12 +479,46 @@ ipcMain.handle('play:settings:update', (_, partial) => {
   if (partial.discordRPC !== undefined) {
     discordRPC.setEnabled(partial.discordRPC);
   }
+  if (partial.startWithWindows !== undefined) {
+    try {
+      app.setLoginItemSettings({
+        openAtLogin: Boolean(partial.startWithWindows),
+        path: app.getPath('exe')
+      });
+    } catch (e) {
+      console.warn('Failed to set login item settings:', e);
+    }
+  }
   const updated = db.saveSettings(partial);
   if (partial.language !== undefined) {
     processWatcher.refreshLanguage();
     gsiService.refreshLanguage();
   }
   return updated;
+});
+
+ipcMain.handle('play:system:clearCache', async () => {
+  const cacheDir = db.getCacheDir();
+  let freedBytes = 0;
+  let count = 0;
+  if (fs.existsSync(cacheDir)) {
+    const files = fs.readdirSync(cacheDir);
+    for (const f of files) {
+      try {
+        const p = path.join(cacheDir, f);
+        const st = fs.statSync(p);
+        if (st.isFile()) {
+          freedBytes += st.size;
+          fs.unlinkSync(p);
+          count++;
+        }
+      } catch {}
+    }
+  }
+  return {
+    freedMb: Number((freedBytes / (1024 * 1024)).toFixed(1)),
+    count
+  };
 });
 
 ipcMain.on('play:system:minimize', () => mainWindow?.minimize());
@@ -347,7 +530,23 @@ ipcMain.on('play:system:maximize', () => {
     mainWindow.maximize();
   }
 });
-ipcMain.on('play:system:close', () => mainWindow?.close());
+ipcMain.on('play:system:close', () => {
+  if (mainWindow?.isVisible()) {
+    mainWindow.hide();
+  } else {
+    mainWindow?.close();
+  }
+});
+ipcMain.on('play:system:showMain', () => {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
+  if (miniWindow) {
+    miniWindow.hide();
+  }
+});
+ipcMain.on('play:system:toggleMiniMode', toggleMiniWindow);
 ipcMain.handle('play:system:isMaximized', () => mainWindow?.isMaximized() ?? false);
 ipcMain.handle('play:system:openExternal', (_, url) => shell.openExternal(url));
 ipcMain.handle('play:system:getPCSpecs', async () => {

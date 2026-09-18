@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const t = translations[language].nav;
 
   const handleNav = (id: PageId) => {
-    soundEngine.playTab();
+    soundEngine.playClick();
     onNavigate(id);
   };
 
@@ -78,8 +78,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       style={{
         width: '240px',
         background: 'var(--bg-sidebar)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
         borderRight: '1px solid var(--border-subtle)',
         display: 'flex',
         flexDirection: 'column',
@@ -91,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       <div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
           {mainNav.map(item => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
@@ -100,45 +98,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.id}
                 onClick={() => handleNav(item.id)}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '9px 12px',
-                  borderRadius: '8px',
-                  background: isActive ? 'var(--bg-glass-hover)' : 'transparent',
+                  borderRadius: '10px',
+                  background: isActive ? 'var(--border-subtle)' : 'transparent',
                   border: isActive ? '1px solid var(--border-highlight)' : '1px solid transparent',
-                  color: isActive ? '#fff' : 'var(--text-secondary)',
+                  boxShadow: isActive ? 'var(--shadow-card)' : 'none',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontWeight: isActive ? 600 : 500,
                   fontSize: '13px',
-                  transition: 'background 120ms ease, border-color 120ms ease, color 120ms ease'
+                  transition: 'background-color 160ms ease, color 160ms ease, border-color 160ms ease'
                 }}
                 onMouseEnter={e => {
-                  soundEngine.playHover();
                   if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                    e.currentTarget.style.color = '#fff';
+                    e.currentTarget.style.background = 'var(--bg-glass-hover)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
                   }
                 }}
                 onMouseLeave={e => {
                   if (!isActive) {
                     e.currentTarget.style.background = 'transparent';
                     e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.borderColor = 'transparent';
                   }
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Icon size={16} style={{ color: isActive ? 'var(--accent-primary)' : 'inherit' }} />
+                  <Icon size={16} strokeWidth={isActive ? 2.2 : 1.8} style={{ color: isActive ? 'var(--text-primary)' : 'inherit' }} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
                     style={{
                       fontSize: '11px',
-                      padding: '1px 7px',
-                      borderRadius: '10px',
-                      background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
-                      color: isActive ? '#fff' : 'var(--text-secondary)',
+                      padding: '1px 8px',
+                      borderRadius: '12px',
+                      background: isActive
+                        ? 'var(--bg-card-hover)'
+                        : 'var(--border-subtle)',
+                      border: '1px solid var(--border-subtle)',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                       fontWeight: 600
                     }}
                   >
@@ -150,174 +154,97 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </div>
 
-        <div style={{ padding: '0 8px', marginBottom: '8px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+        <div style={{ padding: '0 4px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px', paddingLeft: '8px' }}>
             {t.sources}
           </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            <button 
-              onClick={() => handleNav('steam')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                background: activePage === 'steam' ? 'var(--bg-glass-hover)' : 'transparent',
-                border: activePage === 'steam' ? '1px solid var(--border-highlight)' : '1px solid transparent',
-                color: activePage === 'steam' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'background 120ms ease, color 120ms ease'
-              }}
-              onMouseEnter={e => {
-                soundEngine.playHover();
-                if (activePage !== 'steam') {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={e => {
-                if (activePage !== 'steam') {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Gamepad2 size={14} style={{ color: '#38BDF8' }} />
-                <span>{t.steamGames}</span>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{steamCount}</span>
-            </button>
-
-            <button 
-              onClick={() => handleNav('epic')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                background: activePage === 'epic' ? 'var(--bg-glass-hover)' : 'transparent',
-                border: activePage === 'epic' ? '1px solid var(--border-highlight)' : '1px solid transparent',
-                color: activePage === 'epic' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'background 120ms ease, color 120ms ease'
-              }}
-              onMouseEnter={e => {
-                soundEngine.playHover();
-                if (activePage !== 'epic') {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={e => {
-                if (activePage !== 'epic') {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Zap size={14} style={{ color: '#10B981' }} />
-                <span>{t.epicGames}</span>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{epicCount}</span>
-            </button>
-
-            <button 
-              onClick={() => handleNav('gog')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                background: activePage === 'gog' ? 'var(--bg-glass-hover)' : 'transparent',
-                border: activePage === 'gog' ? '1px solid var(--border-highlight)' : '1px solid transparent',
-                color: activePage === 'gog' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'background 120ms ease, color 120ms ease'
-              }}
-              onMouseEnter={e => {
-                soundEngine.playHover();
-                if (activePage !== 'gog') {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={e => {
-                if (activePage !== 'gog') {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Globe size={14} style={{ color: '#A855F7' }} />
-                <span>{t.gogGames}</span>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{gogCount}</span>
-            </button>
-
-            <button 
-              onClick={() => handleNav('custom')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                background: activePage === 'custom' ? 'var(--bg-glass-hover)' : 'transparent',
-                border: activePage === 'custom' ? '1px solid var(--border-highlight)' : '1px solid transparent',
-                color: activePage === 'custom' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'background 120ms ease, color 120ms ease'
-              }}
-              onMouseEnter={e => {
-                soundEngine.playHover();
-                if (activePage !== 'custom') {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={e => {
-                if (activePage !== 'custom') {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FolderCode size={14} style={{ color: '#F59E0B' }} />
-                <span>{t.customGames}</span>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{customCount}</span>
-            </button>
+            {[
+              { id: 'steam' as PageId, label: t.steamGames, icon: Gamepad2, count: steamCount },
+              { id: 'epic' as PageId, label: t.epicGames, icon: Zap, count: epicCount },
+              { id: 'gog' as PageId, label: t.gogGames, icon: Globe, count: gogCount },
+              { id: 'custom' as PageId, label: t.customGames, icon: FolderCode, count: customCount }
+            ].map(src => {
+              const Icon = src.icon;
+              const isSel = activePage === src.id;
+              return (
+                <button
+                  key={src.id}
+                  onClick={() => handleNav(src.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    background: isSel ? 'var(--border-subtle)' : 'transparent',
+                    border: isSel ? '1px solid var(--border-highlight)' : '1px solid transparent',
+                    boxShadow: isSel ? 'var(--shadow-card)' : 'none',
+                    color: isSel ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'background-color 160ms ease, color 160ms ease, border-color 160ms ease'
+                  }}
+                  onMouseEnter={e => {
+                    if (!isSel) {
+                      e.currentTarget.style.background = 'var(--bg-glass-hover)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isSel) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.borderColor = 'transparent';
+                    }
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Icon size={14} style={{ opacity: isSel ? 1 : 0.8 }} />
+                    <span>{src.label}</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{src.count}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div style={{ padding: '12px 6px 0 6px' }}>
+        <div style={{ padding: '10px 4px 0 4px' }}>
           <button
             onClick={() => {
               soundEngine.playClick();
               onAddCustomGame();
             }}
-            className="btn btn-secondary"
             style={{
               width: '100%',
               fontSize: '12px',
-              padding: '8px 12px',
+              fontWeight: 600,
+              padding: '9px 12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px'
+              gap: '7px',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              color: 'var(--text-primary)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)',
+              transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease'
             }}
-            onMouseEnter={() => soundEngine.playHover()}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--bg-card-hover)';
+              e.currentTarget.style.borderColor = 'var(--border-highlight)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--bg-card)';
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-card)';
+            }}
           >
             <Plus size={14} />
             <span>{t.addGame}</span>
@@ -328,7 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div>
         <button
           onClick={() => {
-            soundEngine.playTab();
+            soundEngine.playClick();
             handleNav('settings');
           }}
           style={{
@@ -337,44 +264,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: '10px',
             width: '100%',
             padding: '9px 12px',
-            borderRadius: '8px',
-            background: activePage === 'settings' ? 'var(--bg-glass-hover)' : 'transparent',
+            borderRadius: '10px',
+            background: activePage === 'settings' ? 'var(--border-subtle)' : 'transparent',
             border: activePage === 'settings' ? '1px solid var(--border-highlight)' : '1px solid transparent',
-            color: activePage === 'settings' ? '#fff' : 'var(--text-secondary)',
+            boxShadow: activePage === 'settings' ? 'var(--shadow-card)' : 'none',
+            color: activePage === 'settings' ? 'var(--text-primary)' : 'var(--text-secondary)',
             cursor: 'pointer',
             fontSize: '13px',
             fontWeight: activePage === 'settings' ? 600 : 500,
-            transition: 'background 120ms ease, color 120ms ease'
+            transition: 'background-color 160ms ease, color 160ms ease, border-color 160ms ease'
           }}
           onMouseEnter={e => {
             if (activePage !== 'settings') {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.background = 'var(--bg-glass-hover)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
             }
           }}
           onMouseLeave={e => {
             if (activePage !== 'settings') {
               e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.borderColor = 'transparent';
             }
           }}
         >
-          <Settings size={16} />
+          <Settings size={16} strokeWidth={activePage === 'settings' ? 2.2 : 1.8} />
           <span>{t.settings}</span>
         </button>
 
+
         <div
           style={{
-            padding: '8px 12px 0 12px',
+            padding: '10px 12px 2px 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '10px',
-            color: 'var(--text-dim)'
+            letterSpacing: '0.04em',
+            color: 'var(--text-muted)'
           }}
         >
-          <span>STORM LAUNCHER</span>
-          <span>v1.0.0</span>
+          <span style={{ fontWeight: 600 }}>STORM LAUNCHER</span>
+          <span style={{ padding: '1px 6px', borderRadius: '6px', background: 'var(--border-subtle)', border: '1px solid var(--border-subtle)' }}>v1.0.0</span>
         </div>
       </div>
     </aside>

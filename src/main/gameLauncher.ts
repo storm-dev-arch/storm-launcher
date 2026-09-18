@@ -57,6 +57,7 @@ export class GameLauncherService {
           win.webContents.send('play:game:launched', { ...game, isRunning: true });
         }
 
+        this.handlePostLaunch(win);
         return { success: true };
       } catch (err: any) {
         discordRPC.setIdle(db.getGames().length);
@@ -71,6 +72,7 @@ export class GameLauncherService {
           win.webContents.send('play:game:launched', { ...game, isRunning: true });
         }
 
+        this.handlePostLaunch(win);
         return { success: true };
       } catch (err: any) {
         discordRPC.setIdle(db.getGames().length);
@@ -111,6 +113,7 @@ export class GameLauncherService {
           this.endGameSession(game.id, startTime, win);
         });
 
+        this.handlePostLaunch(win);
         return { success: true };
       } catch (err: any) {
         discordRPC.setIdle(db.getGames().length);
@@ -161,6 +164,15 @@ export class GameLauncherService {
 
   public isGameRunning(gameId: string): boolean {
     return this.activeGames.has(gameId);
+  }
+
+  private handlePostLaunch(win?: BrowserWindow | null) {
+    try {
+      const settings = db.getSettings();
+      if (settings.closeOnLaunch && win && !win.isDestroyed()) {
+        win.minimize();
+      }
+    } catch {}
   }
 }
 

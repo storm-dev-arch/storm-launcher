@@ -22,82 +22,30 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
     canvas.height = 225;
 
     const getPalette = () => {
-      switch (theme) {
-        case 'crimson':
-          return {
-            base: '#070304',
-            orbs: [
-              { r: 118, g: 18, b: 44, a: 0.40 },
-              { r: 72, g: 10, b: 28, a: 0.35 },
-              { r: 96, g: 16, b: 38, a: 0.32 },
-              { r: 52, g: 8, b: 20, a: 0.38 }
-            ]
-          };
-        case 'emerald':
-          return {
-            base: '#020604',
-            orbs: [
-              { r: 10, g: 95, b: 60, a: 0.38 },
-              { r: 6, g: 58, b: 38, a: 0.34 },
-              { r: 16, g: 110, b: 72, a: 0.30 },
-              { r: 4, g: 40, b: 26, a: 0.36 }
-            ]
-          };
-        case 'purple':
-          return {
-            base: '#050308',
-            orbs: [
-              { r: 88, g: 28, b: 145, a: 0.40 },
-              { r: 54, g: 14, b: 98, a: 0.35 },
-              { r: 105, g: 38, b: 160, a: 0.32 },
-              { r: 38, g: 10, b: 68, a: 0.38 }
-            ]
-          };
-        case 'midnight':
-          return {
-            base: '#02040a',
-            orbs: [
-              { r: 18, g: 58, b: 135, a: 0.42 },
-              { r: 12, g: 34, b: 90, a: 0.36 },
-              { r: 24, g: 75, b: 155, a: 0.32 },
-              { r: 8, g: 22, b: 62, a: 0.40 }
-            ]
-          };
-        case 'graphite':
-          return {
-            base: '#07080a',
-            orbs: [
-              { r: 42, g: 60, b: 88, a: 0.36 },
-              { r: 26, g: 38, b: 58, a: 0.32 },
-              { r: 52, g: 72, b: 102, a: 0.28 },
-              { r: 20, g: 28, b: 44, a: 0.35 }
-            ]
-          };
-        case 'oled':
-          return {
-            base: '#000000',
-            orbs: [
-              { r: 22, g: 22, b: 32, a: 0.26 },
-              { r: 14, g: 14, b: 22, a: 0.22 },
-              { r: 28, g: 28, b: 40, a: 0.18 },
-              { r: 10, g: 10, b: 16, a: 0.25 }
-            ]
-          };
-        default:
-          return {
-            base: '#030306',
-            orbs: [
-              { r: 14, g: 62, b: 118, a: 0.40 },
-              { r: 38, g: 20, b: 85, a: 0.34 },
-              { r: 10, g: 78, b: 98, a: 0.30 },
-              { r: 22, g: 44, b: 95, a: 0.36 }
-            ]
-          };
+      if (theme === 'light' || theme === 'white') {
+        return {
+          base: '#f8fafc',
+          orbs: [
+            { r: 186, g: 230, b: 253, a: 0.55 },
+            { r: 224, g: 231, b: 255, a: 0.45 },
+            { r: 204, g: 251, b: 241, a: 0.40 },
+            { r: 241, g: 245, b: 249, a: 0.60 }
+          ]
+        };
       }
+      return {
+        base: '#030305',
+        orbs: [
+          { r: 48, g: 52, b: 64, a: 0.32 },
+          { r: 28, g: 32, b: 40, a: 0.26 },
+          { r: 58, g: 62, b: 76, a: 0.22 },
+          { r: 22, g: 24, b: 32, a: 0.28 }
+        ]
+      };
     };
 
     const render = () => {
-      time += 0.006;
+      time += 0.0035;
       const w = canvas.width;
       const h = canvas.height;
       const palette = getPalette();
@@ -189,7 +137,7 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
           width: '100%',
           height: '100%',
           display: 'block',
-          filter: 'blur(64px)',
+          filter: 'blur(28px)',
           transform: 'scale(1.12)',
           opacity: 0.8
         }}
@@ -198,7 +146,9 @@ export const BackgroundShader: React.FC<BackgroundShaderProps> = ({ theme = 'obs
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(ellipse at 50% 45%, rgba(4,4,6,0.15) 0%, rgba(3,3,5,0.65) 100%)',
+          background: (theme === 'light' || theme === 'white')
+            ? 'radial-gradient(ellipse at 50% 45%, rgba(255,255,255,0.25) 0%, rgba(241,245,249,0.75) 100%)'
+            : 'radial-gradient(ellipse at 50% 45%, rgba(4,4,6,0.15) 0%, rgba(3,3,5,0.65) 100%)',
           pointerEvents: 'none'
         }}
       />

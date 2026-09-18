@@ -4,6 +4,7 @@ import https from 'https';
 import http from 'http';
 import type { SteamGridArtItem, Game } from '../shared/types';
 import { db } from './db';
+import { artworkCache } from './steamgrid/artworkCache';
 
 export class SteamGridDBService {
   public async searchArtwork(
@@ -32,7 +33,7 @@ export class SteamGridDBService {
           }
         }
       } catch (err) {
-        console.warn('SteamGridDB official API error:', err);
+        // Silent fallback as requested
       }
     }
 
@@ -107,6 +108,15 @@ export class SteamGridDBService {
     const game = db.getGame(gameId);
     if (!game) throw new Error('Game not found');
 
+    const cached = artworkCache.getCachedArtwork(gameId, type);
+    if (cached) {
+      const updatedArtwork = { ...game.artwork };
+      if (type === 'cover') updatedArtwork.cover = cached;
+      if (type === 'hero') updatedArtwork.hero = cached;
+      if (type === 'logo') updatedArtwork.logo = cached;
+      return db.saveGame({ ...game, artwork: updatedArtwork });
+    }
+
     const coversDir = path.join(db.getCacheDir(), 'covers');
     if (!fs.existsSync(coversDir)) {
       fs.mkdirSync(coversDir, { recursive: true });
@@ -117,6 +127,12 @@ export class SteamGridDBService {
     const localFilePath = path.join(coversDir, localFileName);
 
     await this.downloadFile(imageUrl, localFilePath);
+
+    // Save to permanent cache directory
+    const cachePath = artworkCache.getCachePath(gameId, type);
+    try {
+      fs.copyFileSync(localFilePath, cachePath);
+    } catch {}
 
     const localUrl = `play://local/${localFilePath.replace(/\\/g, '/')}`;
 
@@ -135,28 +151,53 @@ export class SteamGridDBService {
 
   private downloadFile(urlStr: string, destPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      let isDone = false;
       const file = fs.createWriteStream(destPath);
       const client = urlStr.startsWith('https') ? https : http;
 
-      const req = client.get(urlStr, (response) => {
+      const finishWithError = (err: Error) => {
+        if (isDone) return;
+        isDone = true;
+        try { file.destroy(); } catch {}
+        fs.unlink(destPath, () => {});
+        reject(err);
+      };
+
+      const req = client.get(urlStr, {
+        headers: {
+          'User-Agent': 'Storm-Launcher/1.0'
+        }
+      }, (response) => {
         if (response.statusCode === 301 || response.statusCode === 302) {
           const redirectUrl = response.headers.location;
           if (redirectUrl) {
+            isDone = true;
+            file.destroy();
             this.downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
             return;
           }
         }
+
+        if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+          finishWithError(new Error(`HTTP Error ${response.statusCode || 0}`));
+          return;
+        }
+
         response.pipe(file);
         file.on('finish', () => {
-          file.close();
-          resolve();
+          if (isDone) return;
+          isDone = true;
+          file.close(() => resolve());
         });
+        file.on('error', finishWithError);
       });
 
-      req.on('error', (err) => {
-        fs.unlink(destPath, () => {});
-        reject(err);
+      req.setTimeout(6000, () => {
+        req.destroy();
+        finishWithError(new Error('Artwork download timed out (6s)'));
       });
+
+      req.on('error', finishWithError);
     });
   }
 

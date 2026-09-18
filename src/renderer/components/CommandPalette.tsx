@@ -84,8 +84,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.75)',
-        backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.82)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
@@ -99,12 +98,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         style={{
           width: '580px',
           maxWidth: '92vw',
-          background: 'rgba(14, 14, 18, 0.95)',
-          backdropFilter: 'blur(28px)',
+          background: 'var(--bg-modal)',
           border: '1px solid var(--border-highlight)',
           borderRadius: '14px',
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.8)'
+          boxShadow: 'var(--shadow-glass)'
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -129,7 +127,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               outline: 'none'
             }}
           />
-          <kbd style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>ESC</kbd>
+          <kbd style={{ background: 'var(--border-subtle)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>ESC</kbd>
         </div>
 
         <div style={{ maxHeight: '360px', overflowY: 'auto', padding: '8px' }}>

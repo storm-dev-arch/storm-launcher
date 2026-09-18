@@ -235,9 +235,22 @@ export const ScanGamesModal: React.FC<ScanGamesModalProps> = ({
         </div>
 
         {isScanning && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '8px', marginBottom: '16px' }}>
-            <RefreshCw size={16} className="spin" style={{ color: 'var(--accent-primary)' }} />
-            <span style={{ fontSize: '13px', color: '#fff' }}>{scanMessage || 'Scanning...'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <RefreshCw size={16} className="spin" style={{ color: 'var(--accent-primary)' }} />
+              <span style={{ fontSize: '13px', color: '#fff' }}>{scanMessage || 'Scanning...'}</span>
+            </div>
+            <button
+              onClick={() => {
+                window.stormPlay.scanner.cancelScanDisks();
+                setIsScanning(false);
+                setScanMessage('');
+              }}
+              className="btn btn-secondary"
+              style={{ padding: '4px 8px', fontSize: '11px' }}
+            >
+              {language === 'ru' ? 'Остановить' : 'Cancel'}
+            </button>
           </div>
         )}
 

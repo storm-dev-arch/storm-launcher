@@ -1,9 +1,45 @@
 import https from 'https';
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { app } from 'electron';
 import type { AchievementItem } from '../shared/types';
 
 export class AchievementEngine {
   private cache = new Map<number, { total: number; unlocked: number; items: AchievementItem[]; timestamp: number }>();
+  private cachePath: string;
+
+  constructor() {
+    this.cachePath = path.join(app.getPath('userData'), 'StormPlay', 'database', 'achievements.json');
+    this.loadCache();
+  }
+
+  private loadCache() {
+    try {
+      if (fs.existsSync(this.cachePath)) {
+        const data = JSON.parse(fs.readFileSync(this.cachePath, 'utf8'));
+        for (const key of Object.keys(data)) {
+          this.cache.set(Number(key), data[key]);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load achievements cache', e);
+    }
+  }
+
+  private saveCache() {
+    try {
+      const dir = path.dirname(this.cachePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      const data: Record<string, any> = {};
+      for (const [key, val] of this.cache.entries()) {
+        data[key] = val;
+      }
+      fs.writeFileSync(this.cachePath, JSON.stringify(data));
+    } catch (e) {
+      console.warn('Failed to save achievements cache', e);
+    }
+  }
 
   public async getAchievements(steamAppId: number): Promise<{ total: number; unlocked: number; items: AchievementItem[] }> {
     const cached = this.cache.get(steamAppId);
@@ -40,8 +76,12 @@ export class AchievementEngine {
 
       const result = { total, unlocked, items, timestamp: Date.now() };
       this.cache.set(steamAppId, result);
+      this.saveCache();
       return { total, unlocked, items };
     } catch {
+      if (cached) {
+        return { total: cached.total, unlocked: cached.unlocked, items: cached.items };
+      }
       return {
         total: 0,
         unlocked: 0,

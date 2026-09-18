@@ -63,6 +63,9 @@ export interface Game {
     items?: AchievementItem[];
   };
   screenshots?: string[];
+  notes?: string;
+  tags?: string[];
+  goal?: number; // Target playtime in hours
 }
 
 export interface SessionRecord {
@@ -84,7 +87,7 @@ export interface CollectionRecord {
 }
 
 export interface LauncherSettings {
-  theme: 'obsidian' | 'oled' | 'graphite' | 'midnight' | 'crimson' | 'emerald' | 'purple';
+  theme: 'dark' | 'light';
   glassIntensity: number;
   blurAmount: number;
   cardOpacity: number;
@@ -97,13 +100,17 @@ export interface LauncherSettings {
   steamPaths: string[];
   customScanPaths: string[];
   defaultView: 'grid' | 'compact' | 'list';
-  sortBy: 'name' | 'recent' | 'playtime' | 'added';
+  sortBy: 'name' | 'name-desc' | 'recent' | 'playtime' | 'added' | 'platform';
+  defaultFilter?: string;
   firstLaunchDone: boolean;
   language: 'ru' | 'en';
   discordRPC: boolean;
   soundEnabled: boolean;
   soundVolume: number;
   steamGridApiKey?: string;
+  minimizeToTray?: boolean;
+  closeOnLaunch?: boolean;
+  lowPerformanceMode?: boolean;
 }
 
 export interface ScannerProgress {
@@ -153,7 +160,8 @@ export interface StormPlayAPI {
     syncAll: (force?: boolean) => Promise<{ games: Game[]; progress: ScannerProgress }>;
     scanSteam: (force?: boolean) => Promise<{ games: Game[]; progress: ScannerProgress }>;
     scanMultiLaunchers: () => Promise<Game[]>;
-    deepScanDisks: (onProgress?: (msg: string) => void) => Promise<CandidateExe[]>;
+    deepScanDisks: () => Promise<CandidateExe[]>;
+    cancelScanDisks: () => Promise<void>;
     scanFolderForExecutables: (folderPath: string) => Promise<CandidateExe[]>;
     selectFolder: () => Promise<string | null>;
     selectFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;
@@ -172,6 +180,7 @@ export interface StormPlayAPI {
   };
   discord: {
     updateStatus: (activity: { state?: string; details?: string; gameName?: string }) => Promise<void>;
+    setStatus: (statusType: 'menu' | 'searching' | 'settings' | 'launching' | 'playing', extra?: any) => Promise<boolean>;
   };
   gsi: {
     getStats: () => Promise<any>;
@@ -179,6 +188,10 @@ export interface StormPlayAPI {
   sessions: {
     getAll: () => Promise<SessionRecord[]>;
     getStats: () => Promise<LauncherStats>;
+    getSessionsByGame: (gameId: string, limit?: number) => Promise<SessionRecord[]>;
+  };
+  stats: {
+    getSessionsByGame: (gameId: string, limit?: number) => Promise<SessionRecord[]>;
   };
   collections: {
     getAll: () => Promise<CollectionRecord[]>;
@@ -196,9 +209,12 @@ export interface StormPlayAPI {
     minimize: () => void;
     maximize: () => void;
     close: () => void;
+    showMain: () => void;
+    toggleMiniMode: () => void;
     isMaximized: () => Promise<boolean>;
     openExternal: (url: string) => Promise<void>;
     getPCSpecs: () => Promise<{ cpu: string; ram: string; os: string }>;
+    clearCache: () => Promise<{ freedMb: number; count: number }>;
   };
   events: {
     onGameLaunched: (callback: (game: Game) => void) => () => void;

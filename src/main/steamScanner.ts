@@ -118,6 +118,7 @@ export class SteamScannerService {
 
   constructor() {
     this.detectSteam();
+    this.detectLibraries();
   }
 
   public detectSteam(): string | null {
@@ -153,12 +154,46 @@ export class SteamScannerService {
     return null;
   }
 
+  public detectLibraries(): string[] {
+    const steamPath = this.detectSteam();
+    if (!steamPath) return [];
+    if (this.detectedLibraries.length > 0) return this.detectedLibraries;
+
+    const libraries: string[] = [path.normalize(steamPath)];
+    const vdfPath = path.join(steamPath, 'steamapps', 'libraryfolders.vdf');
+
+    if (fs.existsSync(vdfPath)) {
+      try {
+        const vdfContent = fs.readFileSync(vdfPath, 'utf8');
+        const parsed = parseVDF(vdfContent);
+        const foldersObj = parsed.libraryfolders || parsed;
+
+        for (const k of Object.keys(foldersObj)) {
+          const item = foldersObj[k];
+          if (item && typeof item === 'object' && item.path) {
+            const normalized = path.normalize(item.path);
+            const isAlreadyAdded = libraries.some(l => l.toLowerCase() === normalized.toLowerCase());
+            if (fs.existsSync(normalized) && !isAlreadyAdded) {
+              libraries.push(normalized);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing libraryfolders.vdf:', e);
+      }
+    }
+
+    this.detectedLibraries = libraries;
+    return libraries;
+  }
+
   public getSteamStatus(): { installed: boolean; path?: string; libraries: string[] } {
     const steamPath = this.detectSteam();
+    const libs = this.detectLibraries();
     return {
       installed: !!steamPath,
       path: steamPath || undefined,
-      libraries: this.detectedLibraries
+      libraries: libs
     };
   }
 
@@ -188,31 +223,7 @@ export class SteamScannerService {
     progress.message = 'Reading Steam libraries configuration...';
     onProgress?.(progress);
 
-    const libraries: string[] = [path.normalize(steamPath)];
-    const vdfPath = path.join(steamPath, 'steamapps', 'libraryfolders.vdf');
-
-    if (fs.existsSync(vdfPath)) {
-      try {
-        const vdfContent = fs.readFileSync(vdfPath, 'utf8');
-        const parsed = parseVDF(vdfContent);
-        const foldersObj = parsed.libraryfolders || parsed;
-
-        for (const k of Object.keys(foldersObj)) {
-          const item = foldersObj[k];
-          if (item && typeof item === 'object' && item.path) {
-            const normalized = path.normalize(item.path);
-            const isAlreadyAdded = libraries.some(l => l.toLowerCase() === normalized.toLowerCase());
-            if (fs.existsSync(normalized) && !isAlreadyAdded) {
-              libraries.push(normalized);
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing libraryfolders.vdf:', e);
-      }
-    }
-
-    this.detectedLibraries = libraries;
+    const libraries = this.detectLibraries();
     progress.librariesFound = libraries.length;
     progress.message = `Found ${libraries.length} Steam ${libraries.length === 1 ? 'library' : 'libraries'}. Loading installed manifests...`;
     onProgress?.(progress);

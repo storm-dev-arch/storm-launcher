@@ -1,6 +1,8 @@
 import net from 'net';
 import { db } from './db';
 
+export const DOTA2_ICON_URL = 'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/global/dota2_logo_symbol.png';
+
 export interface DiscordActivity {
   state?: string;
   details?: string;
@@ -185,6 +187,84 @@ export class DiscordRPC {
     this.sendPacket(1, payload);
   }
 
+  private launcherStartTime = Date.now();
+
+  public setInMenu(gameCount?: number) {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    this.setActivity({
+      details: isRu ? 'В меню' : 'In Main Menu',
+      state: isRu ? `Каталог • ${gameCount || 0} игр` : `Library • ${gameCount || 0} games`,
+      startTimestamp: this.launcherStartTime,
+      largeImageText: 'Storm Launcher',
+      smallImageText: 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
+    });
+  }
+
+  public setSearchingGame(gameCount?: number) {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    this.setActivity({
+      details: isRu ? 'Ищет игру' : 'Looking for a game',
+      state: isRu ? `В библиотеке • ${gameCount || 0} игр` : `In Library • ${gameCount || 0} games`,
+      startTimestamp: this.launcherStartTime,
+      largeImageText: 'Storm Launcher',
+      smallImageText: 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
+    });
+  }
+
+  public setInSettings() {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    this.setActivity({
+      details: isRu ? 'Настраивает лаунчер' : 'Configuring launcher',
+      state: isRu ? 'Настройки лаунчера' : 'Launcher Settings',
+      startTimestamp: this.launcherStartTime,
+      largeImageText: 'Storm Launcher',
+      smallImageText: 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
+    });
+  }
+
+  public setLaunching(gameName: string) {
+    let lang = 'ru';
+    try {
+      lang = db.getSettings().language || 'ru';
+    } catch {}
+
+    const isRu = lang === 'ru';
+    this.setActivity({
+      details: isRu ? `Запускает ${gameName}` : `Launching ${gameName}`,
+      state: isRu ? 'Подготовка к игре...' : 'Preparing game...',
+      startTimestamp: Date.now(),
+      largeImageText: gameName,
+      smallImageText: 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
+    });
+  }
+
   public setInGame(gameName: string, startTime: number = Date.now(), imageUrl?: string, isTool = false) {
     let lang = 'ru';
     try {
@@ -192,6 +272,8 @@ export class DiscordRPC {
     } catch {}
 
     const isRu = lang === 'ru';
+    const isDota = gameName.toLowerCase().includes('dota');
+    const largeImage = isDota ? DOTA2_ICON_URL : imageUrl;
     const details = isRu
       ? (isTool ? `Использует ${gameName}` : `Играет в ${gameName}`)
       : (isTool ? `Using ${gameName}` : `Playing ${gameName}`);
@@ -201,28 +283,17 @@ export class DiscordRPC {
       details,
       state,
       startTimestamp: startTime,
-      largeImageKey: imageUrl,
+      largeImageKey: largeImage,
       largeImageText: gameName,
-      smallImageText: 'Storm Launcher'
+      smallImageText: 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
     });
   }
 
-  public setIdle(gameCount: number) {
-    let lang = 'ru';
-    try {
-      lang = db.getSettings().language || 'ru';
-    } catch {}
-
-    const isRu = lang === 'ru';
-    const details = isRu ? 'Просматривает библиотеку' : 'Browsing Game Library';
-    const state = isRu ? `${gameCount} игр в каталоге` : `${gameCount} titles cataloged`;
-
-    this.setActivity({
-      details,
-      state,
-      largeImageText: 'Storm Launcher',
-      smallImageText: 'Storm Launcher'
-    });
+  public setIdle(gameCount: number, customDetails?: string) {
+    this.setInMenu(gameCount);
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "storm-launcher",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Modern Black Glassmorphism Game Launcher & Library Manager for Windows",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -25,7 +25,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-window": "^2.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
@@ -34,6 +35,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
+    "terser": "^5.51.2",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
     "vite-plugin-electron": "^0.29.0",

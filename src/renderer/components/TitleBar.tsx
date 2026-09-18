@@ -52,38 +52,38 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     <div 
       className="app-region-drag"
       style={{
-        height: '42px',
+        height: '46px',
         background: 'var(--bg-header)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--shadow-card)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 12px',
+        padding: '0 14px',
         zIndex: 100,
         position: 'relative',
         userSelect: 'none'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }} className="app-region-no-drag">
+      {/* Brand & Steam Live Status */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }} className="app-region-no-drag">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div 
             style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '5px',
-              background: '#0B0B0E',
-              border: '1px solid rgba(255,255,255,0.2)',
+              width: '24px',
+              height: '24px',
+              borderRadius: '7px',
+              background: 'var(--text-primary)',
+              boxShadow: 'var(--shadow-card)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <Zap size={11} style={{ color: '#fff', fill: '#fff' }} />
+            <Zap size={13} style={{ color: 'var(--bg-app)', fill: 'var(--bg-app)' }} />
           </div>
-          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', color: '#fff' }}>
-            STORM <span style={{ color: 'var(--accent-primary)', fontWeight: 400 }}>LAUNCHER</span>
+          <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--text-primary)' }}>
+            STORM <span style={{ color: 'var(--accent-primary)', fontWeight: 400, opacity: 0.85 }}>LAUNCHER</span>
           </span>
         </div>
 
@@ -92,9 +92,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '3px 9px',
-            borderRadius: '12px',
-            background: 'rgba(255,255,255,0.03)',
+            padding: '3px 10px',
+            borderRadius: '20px',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
             fontSize: '11px',
             color: 'var(--text-secondary)'
@@ -107,114 +107,132 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               height: '6px',
               borderRadius: '50%',
               background: steamStatus.installed ? '#10B981' : '#6B7280',
-              boxShadow: steamStatus.installed ? '0 0 6px #10B981' : 'none'
+              boxShadow: steamStatus.installed ? '0 0 8px #10B981' : 'none'
             }} 
           />
           <span 
             key={`tb-steam-${language}`} 
             className="lang-text-anim" 
-            style={{ color: '#fff', fontWeight: 500 }}
+            style={{ color: 'var(--text-primary)', fontWeight: 500 }}
           >
             {steamStatus.installed ? t.steamConnected : t.steamNotFound}
           </span>
         </div>
       </div>
 
+      {/* Center Dynamic Search Capsule */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="app-region-no-drag">
         <button
           onClick={onOpenCommandPalette}
+          className="interactive-press"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '4px 14px',
-            color: 'var(--text-muted)',
+            borderRadius: '20px',
+            padding: '5px 16px',
+            color: 'var(--text-secondary)',
             fontSize: '12px',
             cursor: 'pointer',
-            transition: 'border-color 150ms ease, background 150ms ease'
+            boxShadow: 'var(--shadow-card)',
+            transition: 'background-color 160ms ease, border-color 160ms ease',
+            minWidth: '220px',
+            justifyContent: 'space-between'
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'var(--border-highlight)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+            e.currentTarget.style.background = 'var(--bg-surface)';
           }}
         >
-          <Search size={13} style={{ color: 'var(--text-muted)' }} />
-          <span key={`tb-search-${language}`} className="lang-text-anim">{t.searchPlaceholder}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Search size={13} style={{ color: 'var(--text-muted)' }} />
+            <span key={`tb-search-${language}`} className="lang-text-anim" style={{ fontWeight: 500 }}>
+              {t.searchPlaceholder}
+            </span>
+          </div>
           <kbd style={{
             fontSize: '10px',
-            background: 'rgba(255,255,255,0.08)',
-            padding: '1px 5px',
-            borderRadius: '4px',
+            background: 'var(--border-subtle)',
+            padding: '2px 6px',
+            borderRadius: '6px',
             color: 'var(--text-secondary)',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            border: '1px solid var(--border-subtle)'
           }}>Ctrl K</kbd>
         </button>
 
         <button
           onClick={onScanSteam}
           disabled={isScanning}
+          className="interactive-press"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '4px 10px',
+            borderRadius: '20px',
+            padding: '5px 12px',
             color: 'var(--text-secondary)',
-            fontSize: '11px',
+            fontSize: '11.5px',
+            fontWeight: 500,
             cursor: isScanning ? 'wait' : 'pointer',
-            transition: 'border-color 150ms ease, background 150ms ease'
+            transition: 'background-color 160ms ease, border-color 160ms ease, color 160ms ease'
           }}
           onMouseEnter={e => {
             if (!isScanning) {
               e.currentTarget.style.borderColor = 'var(--border-highlight)';
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.background = 'var(--bg-card-hover)';
+              e.currentTarget.style.color = 'var(--text-primary)';
             }
           }}
           onMouseLeave={e => {
             if (!isScanning) {
               e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+              e.currentTarget.style.background = 'var(--bg-surface)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
             }
           }}
-          title={language === 'ru' ? 'Синхронизировать все библиотеки (Steam, Epic, GOG)' : 'Sync all game libraries (Steam, Epic, GOG)'}
+          title={language === 'ru' ? 'Синхронизировать библиотеки' : 'Sync game libraries'}
         >
-          <RefreshCw size={12} className={isScanning ? 'spin' : ''} style={{ color: 'var(--accent-primary)' }} />
+          <RefreshCw size={12} className={isScanning ? 'spin' : ''} style={{ color: 'var(--text-primary)' }} />
           <span key={`tb-scan-${language}`} className="lang-text-anim">{t.scan}</span>
         </button>
 
         <button
           onClick={onOpenMiniMode}
+          className="interactive-press"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '4px 10px',
+            borderRadius: '20px',
+            padding: '5px 12px',
             color: 'var(--text-secondary)',
-            fontSize: '11px',
+            fontSize: '11.5px',
+            fontWeight: 500,
             cursor: 'pointer',
-            transition: 'border-color 150ms ease, background 150ms ease'
+            transition: 'background-color 160ms ease, border-color 160ms ease, color 160ms ease'
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'var(--border-highlight)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+            e.currentTarget.style.background = 'var(--bg-surface)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
           }}
-          title="Open Mini Mode launcher (Ctrl + Space)"
+          title="Mini Mode (Ctrl + Space)"
         >
           <Minimize2 size={12} />
           <span key={`tb-mini-${language}`} className="lang-text-anim">{t.mini}</span>
@@ -222,49 +240,51 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
         <button
           onClick={onToggleLanguage}
-          className={langAnim ? 'lang-animate' : ''}
+          className={`interactive-press ${langAnim ? 'lang-animate' : ''}`}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '5px',
-            background: langAnim ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255,255,255,0.04)',
-            border: langAnim ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '4px 9px',
-            color: '#fff',
-            fontSize: '11px',
-            fontWeight: 600,
+            gap: '6px',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '20px',
+            padding: '5px 11px',
+            color: 'var(--text-primary)',
+            fontSize: '11.5px',
+            fontWeight: 700,
             cursor: 'pointer',
-            transition: 'border-color 150ms ease, background 150ms ease, transform 200ms ease'
+            transition: 'background-color 160ms ease, border-color 160ms ease'
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--accent-primary)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.borderColor = 'var(--border-highlight)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = langAnim ? 'var(--accent-primary)' : 'var(--border-subtle)';
-            e.currentTarget.style.background = langAnim ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255,255,255,0.04)';
+            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            e.currentTarget.style.background = 'var(--bg-surface)';
           }}
           title="Switch Language / Сменить язык"
         >
           <Globe 
             size={12} 
             style={{ 
-              color: 'var(--accent-primary)',
+              color: 'var(--text-primary)',
               transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
               transform: langAnim ? 'rotate(180deg)' : 'none'
             }} 
           />
-          <span style={{ transition: 'opacity 200ms ease' }}>{language.toUpperCase()}</span>
+          <span>{language.toUpperCase()}</span>
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center' }} className="app-region-no-drag">
+      {/* Window Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }} className="app-region-no-drag">
         <button 
           onClick={handleMinimize}
           style={{
-            width: '36px',
-            height: '42px',
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
             background: 'none',
             border: 'none',
             color: 'var(--text-secondary)',
@@ -272,11 +292,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease'
+            transition: 'all 160ms ease'
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.background = 'var(--bg-glass-hover)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'none';
@@ -290,8 +310,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         <button 
           onClick={handleMaximize}
           style={{
-            width: '36px',
-            height: '42px',
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
             background: 'none',
             border: 'none',
             color: 'var(--text-secondary)',
@@ -299,11 +320,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease'
+            transition: 'all 160ms ease'
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.background = 'var(--bg-glass-hover)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'none';
@@ -317,8 +338,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         <button 
           onClick={handleClose}
           style={{
-            width: '36px',
-            height: '42px',
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
             background: 'none',
             border: 'none',
             color: 'var(--text-secondary)',
@@ -326,7 +348,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease'
+            transition: 'all 160ms ease'
           }}
           onMouseEnter={e => {
             e.currentTarget.style.background = '#E11D48';

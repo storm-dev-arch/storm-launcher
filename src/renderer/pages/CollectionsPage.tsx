@@ -110,7 +110,7 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
                       boxShadow: `0 0 8px ${col.color || 'var(--accent-primary)'}`
                     }}
                   />
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{col.name}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{col.name}</span>
                 </div>
                 <button
                   onClick={e => {
@@ -148,8 +148,8 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
 
       {activeCollection && (
         <div className="glass-section view-transition" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeCollection.color || '#fff' }} />
+          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeCollection.color || 'var(--accent-primary)' }} />
             <span>{activeCollection.name}</span>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>({collectionGames.length})</span>
           </h2>
@@ -166,13 +166,13 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
                     gap: '10px',
                     padding: '8px 12px',
                     borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.03)',
+                    background: 'var(--bg-glass)',
                     border: '1px solid var(--border-subtle)',
                     cursor: 'pointer'
                   }}
                 >
                   <Gamepad2 size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {game.name}
                   </span>
                 </div>

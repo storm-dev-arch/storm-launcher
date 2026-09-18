@@ -2,7 +2,7 @@ import http from 'http';
 import path from 'path';
 import fs from 'fs';
 import { BrowserWindow } from 'electron';
-import { discordRPC } from './discordRPC';
+import { discordRPC, DOTA2_ICON_URL } from './discordRPC';
 import { db } from './db';
 
 const DOTA_HEROES: Record<string, { ru: string; en: string }> = {
@@ -138,6 +138,7 @@ export class GSIService {
         "hero"          "1"
         "abilities"     "1"
         "items"         "1"
+        "draft"         "1"
     }
 }
 `;
@@ -179,6 +180,20 @@ export class GSIService {
         console.warn('GSI config install error:', err);
       }
     }
+
+    try {
+      const games = db.getGames();
+      const dotaGame = games.find(g => g.steamAppId === 570 || g.name.toLowerCase().includes('dota'));
+      if (dotaGame && dotaGame.installPath && fs.existsSync(dotaGame.installPath)) {
+        const dotaCfgDir = path.join(dotaGame.installPath, 'game', 'dota', 'cfg');
+        if (fs.existsSync(dotaCfgDir)) {
+          const subDir = path.join(dotaCfgDir, 'gamestate_integration');
+          if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true });
+          fs.writeFileSync(path.join(subDir, 'gamestate_integration_storm.cfg'), dotaCfgContent, 'utf8');
+          fs.writeFileSync(path.join(dotaCfgDir, 'gamestate_integration_storm.cfg'), dotaCfgContent, 'utf8');
+        }
+      }
+    } catch {}
   }
 
   public startServer() {
@@ -231,6 +246,15 @@ export class GSIService {
     return Date.now() - this.lastPacketTime < 25000;
   }
 
+  public markInactive() {
+    this.lastPacketTime = 0;
+    this.lastStats = null;
+    this.lastRawData = null;
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('play:gsi:update', null);
+    }
+  }
+
   public refreshLanguage() {
     if (this.isLive() && this.lastRawData) {
       if (this.lastRawData.type === 'dota2') {
@@ -246,7 +270,9 @@ export class GSIService {
     this.lastRawData = { type: 'dota2', data };
 
     const lang: 'ru' | 'en' = db.getSettings().language || 'ru';
+    const isRu = lang === 'ru';
     const heroRaw = data.hero?.name || '';
+    const cleanHero = heroRaw.replace('npc_dota_hero_', '').toLowerCase();
     const heroName = formatDotaHero(heroRaw, lang);
     const kills = data.player?.kills ?? 0;
     const deaths = data.player?.deaths ?? 0;
@@ -256,41 +282,70 @@ export class GSIService {
     const mapName = (data.map?.name || '').toLowerCase();
     const isDemo = mapName.includes('demo') || mapName.includes('training') || mapName.includes('hero_demo');
     const gameState = data.map?.game_state || '';
+    const isPaused = Boolean(data.map?.paused);
 
-    let stateDesc = lang === 'ru' ? 'В матче' : 'In Match';
-    if (isDemo) {
-      stateDesc = lang === 'ru' ? 'Тренировка / Демо' : 'Hero Demo / Training';
-    } else if (gameState.includes('PRE_GAME')) {
-      stateDesc = lang === 'ru' ? 'Разминка / Пик' : 'Pre-Game / Draft';
-    } else if (gameState.includes('POST_GAME')) {
-      stateDesc = lang === 'ru' ? 'Матч завершен' : 'Match Ended';
-    } else if (!heroRaw) {
-      stateDesc = lang === 'ru' ? 'В главном меню' : 'Main Menu';
+    // Use clock_time (real match timer) when available, fallback to game_time
+    const clockTime = data.map?.clock_time;
+    const gameTime = data.map?.game_time || 0;
+    const activeSec = (clockTime !== undefined && !isDemo) ? Math.floor(clockTime) : Math.floor(gameTime);
+
+    let timeStr = '';
+    if (activeSec < 0) {
+      const abs = Math.abs(activeSec);
+      const m = Math.floor(abs / 60);
+      const s = abs % 60;
+      timeStr = `-${m}:${s < 10 ? '0' : ''}${s}`;
+    } else {
+      const m = Math.floor(activeSec / 60);
+      const s = activeSec % 60;
+      timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    const timeSeconds = data.map?.game_time || 0;
-    const mins = Math.floor(timeSeconds / 60);
-    const secs = Math.floor(timeSeconds % 60);
-    const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-
     const kdaStr = `${kills}/${deaths}/${assists}`;
-    const details = heroRaw 
-      ? `Dota 2: ${heroName} (${level} ${lang === 'ru' ? 'ур.' : 'Lvl'})`
-      : (lang === 'ru' ? 'Dota 2: Главное меню' : 'Dota 2: Main Menu');
-
+    let details = '';
     let state = '';
-    if (heroRaw) {
-      if (isDemo) {
-        state = lang === 'ru' 
-          ? `Демо-режим • ${kdaStr} KDA • ${timeStr}`
-          : `Hero Demo • ${kdaStr} KDA • ${timeStr}`;
-      } else {
-        state = lang === 'ru'
-          ? `Счет: ${kdaStr} KDA • ${timeStr}`
-          : `Score: ${kdaStr} KDA • ${timeStr}`;
+    let startTimestamp: number | undefined = undefined;
+
+    const isDraft = gameState === 'DOTA_GAMERULES_STATE_HERO_SELECTION';
+    const isStrategy = gameState === 'DOTA_GAMERULES_STATE_STRATEGY_TIME' || gameState === 'DOTA_GAMERULES_STATE_TEAM_SHOWCASE';
+    const isPreGame = gameState === 'DOTA_GAMERULES_STATE_PRE_GAME' || (clockTime !== undefined && clockTime < 0);
+    const isPostGame = gameState.includes('POST_GAME');
+
+    if (isDemo) {
+      details = heroRaw ? `Dota 2: ${heroName}` : 'Dota 2: Hero Demo';
+      state = isRu
+        ? `Демо-режим • ${kdaStr} KDA • ${timeStr}`
+        : `Hero Demo • ${kdaStr} KDA • ${timeStr}`;
+      if (!isPaused && activeSec >= 0) {
+        startTimestamp = Date.now() - (activeSec * 1000);
+      }
+    } else if (isDraft) {
+      details = isRu ? 'Dota 2: Выбор героев' : 'Dota 2: Hero Selection';
+      state = isRu ? 'Стадия пиков и банов' : 'Bans & Picks Phase';
+    } else if (isStrategy) {
+      details = heroRaw ? `Dota 2: ${heroName}` : (isRu ? 'Dota 2: Подготовка' : 'Dota 2: Strategy Phase');
+      state = isRu ? 'Подготовка к выходу на карту' : 'Strategy & Showcase';
+    } else if (isPreGame) {
+      details = heroRaw
+        ? `Dota 2: ${heroName} (${level} ${isRu ? 'ур.' : 'Lvl'})`
+        : (isRu ? 'Dota 2: Разминка' : 'Dota 2: Pre-Game');
+      state = isRu
+        ? `Сбор рун (${timeStr}) • ${kdaStr} KDA`
+        : `Rune Phase (${timeStr}) • ${kdaStr} KDA`;
+    } else if (isPostGame) {
+      details = heroRaw ? `Dota 2: ${heroName}` : 'Dota 2';
+      state = isRu ? `Матч завершен • ${kdaStr} KDA` : `Match Ended • ${kdaStr} KDA`;
+    } else if (heroRaw) {
+      details = `Dota 2: ${heroName} (${level} ${isRu ? 'ур.' : 'Lvl'})`;
+      state = isRu
+        ? `Счет: ${kdaStr} KDA • ${timeStr}${isPaused ? ' (Пауза)' : ''}`
+        : `Score: ${kdaStr} KDA • ${timeStr}${isPaused ? ' (Paused)' : ''}`;
+      if (!isPaused && activeSec >= 0) {
+        startTimestamp = Date.now() - (activeSec * 1000);
       }
     } else {
-      state = stateDesc;
+      details = isRu ? 'Dota 2: Главное меню' : 'Dota 2: Main Menu';
+      state = isRu ? 'В главном меню' : 'In Main Menu';
     }
 
     this.lastStats = {
@@ -303,12 +358,21 @@ export class GSIService {
       matchTime: timeStr
     };
 
+    const heroIconUrl = heroRaw
+      ? `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${cleanHero}.png`
+      : undefined;
+
     discordRPC.setActivity({
       details,
       state,
-      largeImageKey: 'https://cdn.akamai.steamstatic.com/steam/apps/570/header.jpg',
-      largeImageText: `Dota 2 • ${heroName}`,
-      smallImageText: 'Storm Launcher'
+      startTimestamp,
+      largeImageKey: DOTA2_ICON_URL,
+      largeImageText: heroRaw ? `Dota 2 • ${heroName}` : 'Dota 2',
+      smallImageKey: heroIconUrl,
+      smallImageText: heroRaw ? heroName : 'Storm Launcher',
+      buttons: [
+        { label: isRu ? 'Скачать Storm Launcher' : 'Get Storm Launcher', url: 'https://github.com/storm-dev-arch/storm-launcher' }
+      ]
     });
 
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {

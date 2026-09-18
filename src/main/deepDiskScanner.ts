@@ -4,6 +4,12 @@ import { execSync } from 'child_process';
 import type { CandidateExe } from '../shared/types';
 
 export class DeepDiskScanner {
+  private isCancelled = false;
+
+  public cancel() {
+    this.isCancelled = true;
+  }
+
   private getLogicalDrives(): string[] {
     const drives: string[] = [];
     try {
@@ -27,6 +33,7 @@ export class DeepDiskScanner {
   }
 
   public async scanDisks(onProgress?: (msg: string) => void): Promise<CandidateExe[]> {
+    this.isCancelled = false;
     const results: CandidateExe[] = [];
     const drives = this.getLogicalDrives();
     const seenPaths = new Set<string>();
@@ -55,12 +62,16 @@ export class DeepDiskScanner {
       'torrent'
     ];
 
-    for (const drive of drives) {
-      onProgress?.(`Scanning drive ${drive}...`);
+    for (let i = 0; i < drives.length; i++) {
+      if (this.isCancelled) break;
+      const drive = drives[i];
+      const progressPercent = Math.round((i / drives.length) * 100);
+      onProgress?.(`Scanning drive ${drive}... (${progressPercent}%)`);
       try {
         const rootEntries = fs.readdirSync(drive, { withFileTypes: true });
 
         for (const entry of rootEntries) {
+          if (this.isCancelled) break;
           if (!entry.isDirectory()) continue;
           const folderNameLower = entry.name.toLowerCase();
 
@@ -93,9 +104,11 @@ export class DeepDiskScanner {
     seenPaths: Set<string>,
     onProgress?: (msg: string) => void
   ) {
+    if (this.isCancelled) return;
     try {
       const items = fs.readdirSync(containerPath, { withFileTypes: true });
       for (const item of items) {
+        if (this.isCancelled) return;
         if (!item.isDirectory()) continue;
         const subGamePath = path.join(containerPath, item.name);
         this.checkIfGameFolder(subGamePath, results, seenPaths);
@@ -108,6 +121,7 @@ export class DeepDiskScanner {
     results: CandidateExe[],
     seenPaths: Set<string>
   ) {
+    if (this.isCancelled) return;
     const norm = folderPath.toLowerCase();
     if (seenPaths.has(norm)) return;
 

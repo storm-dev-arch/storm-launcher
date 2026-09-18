@@ -1,23 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Play, Maximize2, Zap } from 'lucide-react';
 import type { Game } from '../../shared/types';
+import { soundEngine } from '../audio/soundEngine';
 
-interface MiniModeModalProps {
-  isOpen: boolean;
-  games: Game[];
-  onClose: () => void;
-  onPlay: (game: Game) => void;
-  onOpenFullApp: () => void;
-}
+export const MiniWidget: React.FC = () => {
+  const [games, setGames] = useState<Game[]>([]);
 
-export const MiniModeModal: React.FC<MiniModeModalProps> = ({
-  isOpen,
-  games,
-  onClose,
-  onPlay,
-  onOpenFullApp
-}) => {
-  if (!isOpen) return null;
+  useEffect(() => {
+    const loadGames = async () => {
+      try {
+        const allGames = await window.stormPlay.games.getAll();
+        setGames(allGames);
+      } catch (err) {
+        console.error('Failed to load games:', err);
+      }
+    };
+    loadGames();
+
+    const unsubUpdated = window.stormPlay.events.onGamesUpdated((updatedGames) => {
+      setGames(updatedGames);
+    });
+
+    return () => {
+      unsubUpdated();
+    };
+  }, []);
+
+  const handlePlay = async (game: Game) => {
+    soundEngine.playLaunch();
+    try {
+      await window.stormPlay.games.launch(game.id);
+      window.close(); // Actually, in Electron, if it's the mini window, window.close() closes it
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOpenFullApp = () => {
+    window.stormPlay.system.maximize(); // will maximize main window? Actually no, system.maximize doesn't explicitly focus main window. Let's add system.showMain()
+  };
 
   const quickGames = games
     .filter(g => g.installed)
@@ -27,37 +48,36 @@ export const MiniModeModal: React.FC<MiniModeModalProps> = ({
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        width: '320px',
+        width: '100%',
+        height: '100vh',
         background: 'rgba(12, 12, 16, 0.96)',
         backdropFilter: 'blur(30px)',
         border: '1px solid var(--border-highlight)',
         borderRadius: '16px',
         padding: '16px',
-        zIndex: 2500,
-        boxShadow: '0 16px 50px rgba(0,0,0,0.8)'
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box'
       }}
-      className="fade-in"
+      className="fade-in app-region-drag"
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Zap size={12} style={{ color: '#000', fill: '#000' }} />
           </div>
-          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', color: '#fff' }}>STORM LAUNCHER MINI</span>
+          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', color: '#fff' }}>STORM MINI</span>
         </div>
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', gap: '4px' }} className="app-region-no-drag">
           <button
-            onClick={onOpenFullApp}
+            onClick={handleOpenFullApp}
             style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
             title="Expand Full App"
           >
             <Maximize2 size={14} />
           </button>
           <button
-            onClick={onClose}
+            onClick={() => window.close()}
             style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
             title="Close Mini Mode"
           >
@@ -66,14 +86,14 @@ export const MiniModeModal: React.FC<MiniModeModalProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, overflowY: 'auto' }} className="app-region-no-drag">
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
           Quick Launch
         </div>
         {quickGames.map(g => (
           <div
             key={g.id}
-            onClick={() => { onPlay(g); onClose(); }}
+            onClick={() => handlePlay(g)}
             style={{
               display: 'flex',
               alignItems: 'center',

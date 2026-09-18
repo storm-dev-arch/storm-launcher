@@ -71,8 +71,7 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.78)',
-        backdropFilter: 'blur(16px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
@@ -293,7 +292,6 @@ export const SteamGridModal: React.FC<SteamGridModalProps> = ({
                   <div
                     key={item.id}
                     onClick={() => !isApplying && handleApply(item)}
-                    onMouseEnter={() => soundEngine.playHover()}
                     style={{
                       position: 'relative',
                       borderRadius: '10px',

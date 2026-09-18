@@ -49,7 +49,7 @@ export class DatabaseService {
   private loadSettings(): LauncherSettings {
     const file = path.join(this.dbDir, 'settings.json');
     const defaultSettings: LauncherSettings = {
-      theme: 'obsidian',
+      theme: 'dark',
       glassIntensity: 0.85,
       blurAmount: 24,
       cardOpacity: 0.65,
@@ -67,13 +67,21 @@ export class DatabaseService {
       language: 'ru',
       discordRPC: true,
       soundEnabled: true,
-      soundVolume: 0.75
+      soundVolume: 0.75,
+      minimizeToTray: true,
+      closeOnLaunch: false,
+      lowPerformanceMode: false
     };
 
     if (fs.existsSync(file)) {
       try {
         const raw = fs.readFileSync(file, 'utf8');
-        return { ...defaultSettings, ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw);
+        const merged: LauncherSettings = { ...defaultSettings, ...parsed };
+        if (merged.theme !== 'light') {
+          merged.theme = 'dark';
+        }
+        return merged;
       } catch {
         return defaultSettings;
       }
@@ -174,6 +182,13 @@ export class DatabaseService {
 
   public getSessions(): SessionRecord[] {
     return [...this.sessions].sort((a, b) => b.startTime - a.startTime);
+  }
+
+  public getSessionsByGame(gameId: string, limit: number = 20): SessionRecord[] {
+    return this.sessions
+      .filter(s => s.gameId === gameId)
+      .sort((a, b) => b.startTime - a.startTime)
+      .slice(0, limit);
   }
 
   public addSession(session: SessionRecord) {
